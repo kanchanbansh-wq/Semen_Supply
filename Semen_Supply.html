@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Semen Stock Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: skyblue;
+    --bg2: pink;
+    --bg3: lightsilver;
+    --bg4: pink;
+    --border: black;
+    --border2: black;
+    --text: black;
+    --text2: black;
+    --text3: black;
+    --accent: black;
+    --accent2: black;
+    --green: #22c87a;
+    --green2: #16a060;
+    --red: black;
+    --red2: #c73c3c;
+    --yellow: #f0b429;
+    --yellow2: #c99020;
+    --pink: #a855f7;
+    --cyan: #06b6d4;
+    --font: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --radius2: 6px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; }
+  body { display: flex; flex-direction: column; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Layout */
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  #header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  #header-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+  #header-title span { color: var(--accent); }
+  #header-right { display: flex; align-items: center; gap: 8px; }
+  .role-badge { background: var(--bg4); border: 1px solid var(--border2); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; font-family: var(--mono); letter-spacing: 0.5px; }
+  .role-badge.purchase { color: var(--cyan); border-color: var(--cyan); }
+  .role-badge.supply { color: var(--green); border-color: var(--green); }
+  .role-badge.monitor { color: var(--purple); border-color: var(--purple); }
+
+  #content { flex: 1; overflow-y: auto; }
+  #nav { background: var(--bg2); border-top: 1px solid var(--border); display: flex; flex-shrink: 0; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px; border: none; background: none; color: var(--text3); cursor: pointer; font-family: var(--font); font-size: 10px; font-weight: 600; letter-spacing: 0.3px; transition: color 0.2s; border-top: 2px solid transparent; }
+  .nav-btn.active { color: var(--accent); border-top-color: var(--accent); }
+  .nav-btn svg { width: 20px; height: 20px; }
+
+  /* Pages */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text2); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* Forms */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 5px; letter-spacing: 0.4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius2);
+    color: var(--text); font-family: var(--font); font-size: 14px; padding: 10px 12px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--text3); }
+  .field select option { background: var(--bg3); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; border-radius: var(--radius2); border: none; cursor: pointer; font-family: var(--font); font-size: 13px; font-weight: 700; letter-spacing: 0.3px; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: var(--green2); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: var(--red2); }
+  .btn-ghost { background: var(--bg4); border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-xs { padding: 4px 8px; font-size: 11px; border-radius: 4px; }
+  .btn-full { width: 100%; }
+  .btn-icon { width: 32px; height: 32px; padding: 0; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; font-family: var(--mono); }
+  .badge-green { background: rgba(34,200,122,0.15); color: var(--green); border: 1px solid rgba(34,200,122,0.3); }
+  .badge-red { background: rgba(240,82,82,0.15); color: var(--red); border: 1px solid rgba(240,82,82,0.3); }
+  .badge-yellow { background: rgba(240,180,41,0.15); color: var(--yellow); border: 1px solid rgba(240,180,41,0.3); }
+  .badge-blue { background: rgba(79,142,247,0.15); color: var(--accent); border: 1px solid rgba(79,142,247,0.3); }
+  .badge-purple { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+  .badge-edited { background: rgba(240,180,41,0.1); color: var(--yellow); font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: flex-end; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 20px 16px; animation: slideUp 0.25s ease; }
+  .modal.center { border-radius: 16px; margin: auto; max-height: 85vh; }
+  .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .modal-close { background: var(--bg4); border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text2); font-size: 16px; }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Login */
+  #login-page { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: var(--bg); }
+  .login-logo { font-size: 36px; margin-bottom: 8px; }
+  .login-title { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--text3); margin-bottom: 32px; }
+  .login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 340px; }
+  .role-selector { display: flex; gap: 8px; margin-bottom: 20px; }
+  .role-option { flex: 1; padding: 10px 6px; border: 1px solid var(--border); border-radius: var(--radius2); text-align: center; cursor: pointer; font-size: 12px; font-weight: 700; transition: all 0.2s; color: var(--text3); }
+  .role-option.selected.purchase { border-color: var(--cyan); color: var(--cyan); background: rgba(6,182,212,0.1); }
+  .role-option.selected.supply { border-color: var(--green); color: var(--green); background: rgba(34,200,122,0.1); }
+  .role-option.selected.monitor { border-color: var(--purple); color: var(--purple); background: rgba(168,85,247,0.1); }
+
+  /* Summary Strip */
+  .summary-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .summary-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 10px; text-align: center; }
+  .summary-item .val { font-size: 20px; font-weight: 800; font-family: var(--mono); color: var(--accent); }
+  .summary-item .lbl { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.4px; margin-top: 2px; }
+
+  /* Progress bar */
+  .progress-bar { background: var(--bg4); border-radius: 4px; height: 5px; margin-top: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.4s; }
+  .progress-fill.conv { background: var(--cyan); }
+  .progress-fill.sex { background: var(--purple); }
+
+  /* Bull stock row */
+  .bull-row { background: var(--bg3); border-radius: var(--radius2); padding: 12px; margin-bottom: 8px; }
+  .bull-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .bull-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bull-stat { font-size: 11px; color: var(--text2); background: var(--bg4); padding: 3px 8px; border-radius: 4px; font-family: var(--mono); }
+  .bull-stat .val { color: var(--text); font-weight: 700; }
+
+  /* Line items table */
+  .line-items { border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; margin-bottom: 8px; }
+  .line-item { border-bottom: 1px solid var(--border); padding: 10px 12px; }
+  .line-item:last-child { border-bottom: none; }
+  .line-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--text2); }
+  .line-item-grid { display: grid; gap: 8px; }
+  .add-line-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px; background: var(--bg3); border: 1px dashed var(--border2); border-radius: var(--radius2); color: var(--accent); font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+  /* Record cards */
+  .record-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .record-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .record-type { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+  .record-id { font-size: 14px; font-weight: 800; font-family: var(--mono); }
+  .record-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .record-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+  .supply-route { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .supply-route .arrow { color: var(--accent); }
+  .center-code { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+  /* Filter tabs */
+  .filter-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; scrollbar-width: none; }
+  .filter-tabs::-webkit-scrollbar { display: none; }
+  .filter-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); transition: all 0.2s; }
+  .filter-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Autocomplete */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius2); z-index: 100; max-height: 200px; overflow-y: auto; }
+  .autocomplete-item { padding: 10px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--bg4); color: var(--accent); }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .stock-badge { float: right; font-size: 11px; font-family: var(--mono); color: var(--green); }
+
+  /* GST summary */
+  .gst-summary { background: var(--bg4); border-radius: var(--radius2); padding: 12px; margin-top: 8px; }
+  .gst-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .gst-row.total { font-weight: 800; font-size: 15px; color: var(--accent); border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
+
+  /* Alert/confirm modal */
+  .alert-modal { text-align: center; padding: 24px 20px; }
+  .alert-icon { font-size: 48px; margin-bottom: 12px; }
+  .alert-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .alert-msg { font-size: 14px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+  .alert-btns { display: flex; gap: 10px; }
+
+  /* Hard block */
+  .hard-block { background: rgba(240,82,82,0.12); border: 2px solid var(--red); border-radius: var(--radius); padding: 14px; margin-top: 8px; display: none; }
+  .hard-block.show { display: block; }
+  .hard-block-title { color: var(--red); font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+  .hard-block-msg { color: var(--text2); font-size: 13px; }
+
+  /* Tabs inside modal */
+  .tab-row { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tab-btn { flex: 1; padding: 10px; font-size: 13px; font-weight: 700; background: none; border: none; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Settings list */
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 14px; font-weight: 600; }
+  .settings-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .settings-action { flex-shrink: 0; margin-left: 12px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 15px; font-weight: 700; color: var(--text2); }
+  .empty-sub { font-size: 13px; margin-top: 4px; }
+
+  /* Fixed item row */
+  .fi-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .fi-row:last-child { border-bottom: none; }
+  .fi-name { flex: 1; font-size: 14px; font-weight: 600; }
+  .fi-qty { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .fi-expiry { font-size: 12px; margin-left: 4px; }
+
+  /* Page section title */
+  .section-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .section-sub { font-size: 13px; color: var(--text3); margin-bottom: 16px; }
+
+  /* Import preview table */
+  .import-preview { overflow-x: auto; margin-top: 12px; }
+  .import-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .import-table th { background: var(--bg4); padding: 8px 10px; text-align: left; font-weight: 700; color: var(--text2); border-bottom: 1px solid var(--border); }
+  .import-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .import-table tr:last-child td { border-bottom: none; }
+
+  /* Loading spinner */
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* KM field note */
+  .km-total { font-size: 13px; color: var(--cyan); font-family: var(--mono); padding: 8px 12px; background: var(--bg4); border-radius: var(--radius2); text-align: center; margin-top: -6px; margin-bottom: 12px; }
+
+  .text-red { color: var(--red); }
+  .text-green { color: var(--green); }
+  .text-yellow { color: var(--yellow); }
+  .text-cyan { color: var(--cyan); }
+  .text-accent { color: var(--accent); }
+  .text-muted { color: var(--text2); }
+  .text-sm { font-size: 12px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mb-0 { margin-bottom: 0; }
+  .flex { display: flex; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .gap-8 { gap: 8px; }
+  .gap-6 { gap: 6px; }
+  .w-full { width: 100%; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-page">
+  <div class="login-logo">🐂</div>
+  <div class="login-title">Semen Stock Manager</div>
+  <div class="login-sub">Livestock Genetics Management System</div>
+  <div class="login-card">
+    <div class="field"><label>Select Role</label></div>
+    <div class="role-selector">
+      <div class="role-option purchase" data-role="purchase" onclick="selectRole('purchase',this)">Purchase</div>
+      <div class="role-option supply" data-role="supply" onclick="selectRole('supply',this)">Supply</div>
+      <div class="role-option monitor" data-role="monitor" onclick="selectRole('monitor',this)">Monitor</div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-error" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Login →</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" class="hidden">
+  <div id="header">
+    <div id="header-title">🐂 <span>SSM</span></div>
+    <div id="header-right">
+      <div id="role-badge" class="role-badge"></div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Out</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- Dashboard/Stock Page -->
+    <div id="page-stock" class="page">
+      <div class="section-title">Stock Overview</div>
+      <div class="section-sub">Live inventory status</div>
+      <div id="summary-strip" class="summary-strip"></div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Bull Semen Stock</div>
+        <div id="bull-stock-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Fixed Items Stock</div>
+        <div id="fixed-stock-list"></div>
+      </div>
+    </div>
+
+    <!-- Purchase Page -->
+    <div id="page-purchase" class="page">
+      <div class="section-title">Purchase Order</div>
+      <div class="section-sub">Record new PO receipt</div>
+      <div class="tab-row">
+        <button class="tab-btn active" id="po-tab-semen" onclick="switchPOTab('semen')">Semen PO</button>
+        <button class="tab-btn" id="po-tab-fixed" onclick="switchPOTab('fixed')">Fixed Items PO</button>
+      </div>
+
+      <!-- Semen PO Form -->
+      <div id="po-semen-form">
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Semen Purchase Order</div>
+          <div class="field-row">
+            <div class="field"><label>PO Number *</label><input type="text" id="spo-no" placeholder="PO-2024-001"></div>
+            <div class="field"><label>PO Date *</label><input type="date" id="spo-date"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Receipt Date</label><input type="date" id="spo-rdate"></div>
+            <div class="field"><label>Supplier *</label><input type="text" id="spo-supplier" placeholder="Supplier name"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Line Items</div>
+          <div id="semen-line-items"></div>
+          <button class="add-line-btn" onclick="addSemenLineItem()">+ Add Bull / Semen Item</button>
+        </div>
+        <div id="spo-gst-summary" class="card" style="display:none">
+          <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>GST Summary</div>
+          <div id="spo-gst-content"></div>
+        </div>
+        <button class="btn btn-success btn-full" onclick="saveSemenPO()">Save Semen PO</button>
+      </div>
+
+      <!-- Fixed PO Form -->
+      <div id="po-fixed-form" class="hidden">
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--green)"></span>Fixed Items Purchase Order</div>
+          <div class="field-row">
+            <div class="field"><label>PO Number *</label><input type="text" id="fpo-no" placeholder="FPO-2024-001"></div>
+            <div class="field"><label>PO Date *</label><input type="date" id="fpo-date"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Receipt Date</label><input type="date" id="fpo-rdate"></div>
+            <div class="field"><label>Supplier *</label><input type="text" id="fpo-supplier" placeholder="Supplier name"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--green)"></span>Line Items</div>
+          <div id="fixed-line-items"></div>
+          <button class="add-line-btn" onclick="addFixedLineItem()">+ Add Fixed Item</button>
+        </div>
+        <div id="fpo-gst-summary" class="card" style="display:none">
+          <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>GST Summary</div>
+          <div id="fpo-gst-content"></div>
+        </div>
+        <button class="btn btn-success btn-full" onclick="saveFixedPO()">Save Fixed Items PO</button>
+      </div>
+    </div>
+
+    <!-- Supply Page -->
+    <div id="page-supply" class="page">
+      <div class="section-title">Supply Record</div>
+      <div class="section-sub">Record outgoing supply trip</div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Trip Details</div>
+        <div class="field-row">
+          <div class="field"><label>Date *</label><input type="date" id="sup-date"></div>
+          <div class="field"><label>Receipt No. *</label><input type="text" id="sup-receipt" placeholder="REC-001"></div>
+        </div>
+        <div class="field">
+          <label>From Center *</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="sup-from" placeholder="Search center..." autocomplete="off" oninput="centerSearch('sup-from','sup-from-list','sup-from-code')">
+            <input type="hidden" id="sup-from-code">
+            <div class="autocomplete-list hidden" id="sup-from-list"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>To Center *</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="sup-to" placeholder="Search center..." autocomplete="off" oninput="centerSearch('sup-to','sup-to-list','sup-to-code')">
+            <input type="hidden" id="sup-to-code">
+            <div class="autocomplete-list hidden" id="sup-to-list"></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Opening KM</label><input type="number" id="sup-km-open" placeholder="12345" oninput="calcKM()"></div>
+          <div class="field"><label>Closing KM</label><input type="number" id="sup-km-close" placeholder="12400" oninput="calcKM()"></div>
+        </div>
+        <div id="km-total-disp" class="km-total hidden"></div>
+        <div class="field"><label>Note</label><input type="text" id="sup-note" placeholder="Optional note..."></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Supply Items</div>
+        <div id="supply-items-list"></div>
+        <button class="add-line-btn" onclick="addSupplyItem()">+ Add Item</button>
+        <div id="supply-hard-block" class="hard-block">
+          <div class="hard-block-title">⛔ Stock Exceeded</div>
+          <div id="supply-block-msg" class="hard-block-msg"></div>
+        </div>
+      </div>
+      <button id="save-supply-btn" class="btn btn-success btn-full" onclick="saveSupply()">Save Supply Record</button>
+    </div>
+
+    <!-- Records Page -->
+    <div id="page-records" class="page">
+      <div class="section-title">Records</div>
+      <div class="filter-tabs" id="record-filters">
+        <div class="filter-tab active" onclick="setRecordFilter('all',this)">All</div>
+        <div class="filter-tab" onclick="setRecordFilter('purchase',this)">Purchase</div>
+        <div class="filter-tab" onclick="setRecordFilter('supply',this)">Supply</div>
+        <div class="filter-tab" onclick="setRecordFilter('today',this)">Today</div>
+        <div class="filter-tab" onclick="setRecordFilter('expiring',this)">⚠ Expiring</div>
+      </div>
+      <div id="records-list"></div>
+    </div>
+
+    <!-- Settings/Monitor Page -->
+    <div id="page-settings" class="page">
+      <div class="section-title">Settings</div>
+      <div class="section-sub">Monitor administration</div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Actions</div>
+        <button class="btn btn-ghost btn-full mb-0 mt-8" onclick="exportCSV()" style="margin-bottom:8px">📤 Export Full CSV</button>
+        <button class="btn btn-ghost btn-full mb-0" onclick="openImportModal()">📥 Bulk PO Import (Excel)</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Change Passwords</div>
+        <div id="pw-settings"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Fixed Items List</div>
+        <div id="fixed-items-mgmt"></div>
+        <div class="flex gap-8 mt-12">
+          <input type="text" id="new-fi-name" placeholder="New item name" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);color:var(--text);padding:8px 10px;font-family:var(--font)">
+          <button class="btn btn-primary btn-sm" onclick="addFixedItem()">Add</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Center Master</div>
+        <div class="flex gap-8" style="margin-bottom:12px">
+          <button class="btn btn-ghost btn-sm" onclick="openAddCenterModal()">+ Add Center</button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">📥 Import CSV <input type="file" accept=".csv,.xlsx" id="center-import-file" style="display:none" onchange="importCenters(this)"></label>
+          <button class="btn btn-ghost btn-sm" onclick="downloadCenterTemplate()">Template</button>
+        </div>
+        <div id="center-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <nav id="nav"></nav>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="alert-modal">
+  <div class="modal center">
+    <div class="alert-modal">
+      <div class="alert-icon" id="alert-icon">⚠️</div>
+      <div class="alert-title" id="alert-title"></div>
+      <div class="alert-msg" id="alert-msg"></div>
+      <div class="alert-btns" id="alert-btns"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="edit-po-modal">
+  <div class="modal">
+    <div class="modal-title">Edit Purchase Record <span class="modal-close" onclick="closeModal('edit-po-modal')">×</span></div>
+    <div id="edit-po-content"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="add-center-modal">
+  <div class="modal center">
+    <div class="modal-title">Add Center <span class="modal-close" onclick="closeModal('add-center-modal')">×</span></div>
+    <div class="field"><label>Center Code *</label><input type="text" id="nc-code" placeholder="CC001"></div>
+    <div class="field"><label>Center Name *</label><input type="text" id="nc-name" placeholder="Main Center"></div>
+    <div class="field"><label>DOJ</label><input type="date" id="nc-doj"></div>
+    <button class="btn btn-success btn-full" onclick="saveCenter()">Save Center</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <div class="modal-title">Bulk PO Import <span class="modal-close" onclick="closeModal('import-modal')">×</span></div>
+    <div class="tab-row">
+      <button class="tab-btn active" id="imp-tab-semen" onclick="switchImportTab('semen')">Semen PO</button>
+      <button class="tab-btn" id="imp-tab-fixed" onclick="switchImportTab('fixed')">Fixed Items PO</button>
+    </div>
+    <div id="import-content">
+      <p class="text-muted text-sm" style="margin-bottom:12px">Upload Excel/CSV with columns: PO Number, PO Date, Receipt Date, Supplier, Bull Name, Semen No, Type, Qty, Rate, GST%</p>
+      <button class="btn btn-ghost btn-sm" onclick="downloadPOTemplate('semen')" style="margin-bottom:10px">📄 Download Template</button>
+      <label class="btn btn-primary btn-full" style="cursor:pointer">📥 Select File <input type="file" accept=".csv,.xlsx" id="po-import-file" style="display:none" onchange="handlePOImport(this)"></label>
+      <div id="import-preview-area"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="soft-warn-modal">
+  <div class="modal center">
+    <div class="alert-modal">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-title">Stock Warning</div>
+      <div class="alert-msg" id="soft-warn-msg"></div>
+      <div class="alert-btns">
+        <button class="btn btn-ghost w-full" onclick="closeModal('soft-warn-modal')">Review</button>
+        <button class="btn btn-primary w-full" id="soft-warn-proceed">Proceed Anyway</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const DB = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('ssm_'+k)||'null'); }catch(e){ return null; } },
+  set(k,v){ localStorage.setItem('ssm_'+k, JSON.stringify(v)); },
+  getArr(k){ return DB.get(k)||[]; },
+  push(k,v){ const a=DB.getArr(k); a.push(v); DB.set(k,a); },
+  save(k,arr){ DB.set(k,arr); }
+};
+
+// Init defaults
+function initDefaults(){
+  if(!DB.get('passwords')) DB.set('passwords',{purchase:'purchase123',supply:'supply123',monitor:'monitor123'});
+  if(!DB.get('fixedItems')) DB.set('fixedItems',['NL2','Sheath','Gloves']);
+  if(!DB.get('centers')) DB.set('centers',[]);
+  if(!DB.get('semenPOs')) DB.set('semenPOs',[]);
+  if(!DB.get('fixedPOs')) DB.set('fixedPOs',[]);
+  if(!DB.get('supplies')) DB.set('supplies',[]);
+}
+initDefaults();
+
+let currentRole = null;
+let currentFilter = 'all';
+let importType = 'semen';
+let importRows = [];
+let softWarnCallback = null;
+const today = () => new Date().toISOString().split('T')[0];
+
+// ============================================================
+// AUTH
+// ============================================================
+function selectRole(role, el){
+  document.querySelectorAll('.role-option').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  el.dataset.role && (el.dataset.roleSelected = role);
+  document.getElementById('login-pwd').focus();
+}
+
+function getSelectedRole(){
+  const el = document.querySelector('.role-option.selected');
+  return el ? el.dataset.role : null;
+}
+
+function doLogin(){
+  const role = getSelectedRole();
+  if(!role){ showAlert('⚠️','Select Role','Please select a role first'); return; }
+  const pwd = document.getElementById('login-pwd').value;
+  const passwords = DB.get('passwords');
+  if(passwords[role] === pwd){
+    currentRole = role;
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    initApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-error').textContent = 'Incorrect password. Try again.';
+  }
+}
+
+function logout(){
+  currentRole = null;
+  document.getElementById('login-page').style.display = '';
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-pwd').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ============================================================
+// APP INIT
+// ============================================================
+function initApp(){
+  const badge = document.getElementById('role-badge');
+  badge.textContent = currentRole.toUpperCase();
+  badge.className = 'role-badge '+currentRole;
+  buildNav();
+  navigateTo('stock');
+  // set today's date for forms
+  const todayVal = today();
+  ['spo-date','spo-rdate','fpo-date','fpo-rdate','sup-date'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = todayVal;
+  });
+}
+
+function buildNav(){
+  const nav = document.getElementById('nav');
+  const items = [
+    {id:'stock', label:'Stock', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`},
+    {id:'records', label:'Records', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`},
+  ];
+  if(currentRole === 'purchase' || currentRole === 'monitor'){
+    items.splice(1,0,{id:'purchase', label:'Purchase', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`});
+  }
+  if(currentRole === 'supply' || currentRole === 'monitor'){
+    items.splice(currentRole==='monitor'?2:1,0,{id:'supply', label:'Supply', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`});
+  }
+  if(currentRole === 'monitor'){
+    items.push({id:'settings', label:'Settings', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`});
+  }
+  nav.innerHTML = items.map(i=>`<button class="nav-btn" id="nav-${i.id}" onclick="navigateTo('${i.id}')">${i.icon}${i.label}</button>`).join('');
+}
+
+function navigateTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const pageEl = document.getElementById('page-'+page);
+  if(pageEl) pageEl.classList.add('active');
+  const navEl = document.getElementById('nav-'+page);
+  if(navEl) navEl.classList.add('active');
+  if(page==='stock') renderStock();
+  if(page==='records') renderRecords();
+  if(page==='settings') renderSettings();
+  if(page==='purchase') initPurchaseForms();
+  if(page==='supply') initSupplyForm();
+}
+
+// ============================================================
+// STOCK CALCULATIONS
+// ============================================================
+function calcBullStock(){
+  const semenPOs = DB.getArr('semenPOs');
+  const supplies = DB.getArr('supplies');
+  const bulls = {};
+  semenPOs.forEach(po=>{
+    po.items.forEach(item=>{
+      if(!item.bullName) return;
+      const k = item.bullName;
+      if(!bulls[k]) bulls[k]={conv:{received:0,supplied:0},sex:{received:0,supplied:0}};
+      const type = item.type==='Sex Sorted'?'sex':'conv';
+      bulls[k][type].received += Number(item.qty)||0;
+    });
+  });
+  supplies.forEach(sup=>{
+    (sup.items||[]).forEach(item=>{
+      if(!item.bullName) return;
+      const k = item.bullName;
+      if(!bulls[k]) bulls[k]={conv:{received:0,supplied:0},sex:{received:0,supplied:0}};
+      const type = item.type==='Sex Sorted'?'sex':'conv';
+      bulls[k][type].supplied += Number(item.qty)||0;
+    });
+  });
+  return bulls;
+}
+
+function calcFixedStock(){
+  const fixedPOs = DB.getArr('fixedPOs');
+  const supplies = DB.getArr('supplies');
+  const items = {};
+  fixedPOs.forEach(po=>{
+    po.items.forEach(item=>{
+      if(!item.itemName) return;
+      const k = item.itemName;
+      if(!items[k]) items[k]={batches:[],supplied:0};
+      items[k].batches.push({qty:Number(item.qty)||0, expiry:item.expiry, received:po.receiptDate||po.poDate});
+    });
+  });
+  supplies.forEach(sup=>{
+    (sup.items||[]).forEach(item=>{
+      if(item.itemType==='fixed'){
+        const k = item.itemName;
+        if(!items[k]) items[k]={batches:[],supplied:0};
+        items[k].supplied += Number(item.qty)||0;
+      }
+    });
+  });
+  // calc available
+  Object.keys(items).forEach(k=>{
+    const totalReceived = items[k].batches.reduce((a,b)=>a+(b.qty||0),0);
+    items[k].available = totalReceived - items[k].supplied;
+    // find nearest expiry
+    const expiryDates = items[k].batches.filter(b=>b.expiry).map(b=>b.expiry).sort();
+    items[k].nearestExpiry = expiryDates[0]||null;
+  });
+  return items;
+}
+
+function getBullStockAvailable(bullName, type='conv'){
+  const bulls = calcBullStock();
+  const b = bulls[bullName];
+  if(!b) return 0;
+  const t = type==='Sex Sorted'?'sex':'conv';
+  return (b[t].received - b[t].supplied);
+}
+
+function getExpiryStatus(dateStr){
+  if(!dateStr) return null;
+  const exp = new Date(dateStr);
+  const now = new Date();
+  const diff = (exp - now)/(1000*60*60*24);
+  if(diff < 0) return 'expired';
+  if(diff <= 30) return 'expiring';
+  return 'valid';
+}
+
+// ============================================================
+// RENDER STOCK PAGE
+// ============================================================
+function renderStock(){
+  const bulls = calcBullStock();
+  const fixed = calcFixedStock();
+  const supplies = DB.getArr('supplies');
+
+  // Summary
+  let convTotal=0, sexTotal=0, bullCount=0, fiTotal=0, totalKM=0, expiringCount=0;
+  Object.values(bulls).forEach(b=>{
+    const ca=b.conv.received-b.conv.supplied, sa=b.sex.received-b.sex.supplied;
+    if(ca>0||sa>0) bullCount++;
+    convTotal+=ca; sexTotal+=sa;
+  });
+  Object.values(fixed).forEach(f=>{
+    fiTotal+=f.available||0;
+    if(f.nearestExpiry){
+      const s=getExpiryStatus(f.nearestExpiry);
+      if(s==='expiring'||s==='expired') expiringCount++;
+    }
+  });
+  supplies.forEach(s=>{ totalKM+=Number(s.totalKM)||0; });
+
+  document.getElementById('summary-strip').innerHTML = `
+    <div class="summary-item"><div class="val">${convTotal}</div><div class="lbl">Conv. Doses</div></div>
+    <div class="summary-item"><div class="val">${sexTotal}</div><div class="lbl">Sex Sorted</div></div>
+    <div class="summary-item"><div class="val">${bullCount}</div><div class="lbl">Active Bulls</div></div>
+    <div class="summary-item"><div class="val">${fiTotal}</div><div class="lbl">Fixed Items</div></div>
+    <div class="summary-item"><div class="val">${totalKM}</div><div class="lbl">Total KM</div></div>
+    <div class="summary-item"><div class="val" style="color:var(--yellow)">${expiringCount}</div><div class="lbl">Expiring</div></div>
+  `;
+
+  // Bull stock
+  const bullNames = Object.keys(bulls);
+  if(bullNames.length===0){
+    document.getElementById('bull-stock-list').innerHTML = `<div class="empty"><div class="empty-icon">🐂</div><div class="empty-title">No semen received yet</div></div>`;
+  } else {
+    document.getElementById('bull-stock-list').innerHTML = bullNames.map(name=>{
+      const b = bulls[name];
+      const ca = b.conv.received-b.conv.supplied;
+      const sa = b.sex.received-b.sex.supplied;
+      const convPct = b.conv.received>0 ? Math.round(ca/b.conv.received*100) : 0;
+      const sexPct = b.sex.received>0 ? Math.round(sa/b.sex.received*100) : 0;
+      return `<div class="bull-row">
+        <div class="bull-name">${name}</div>
+        ${b.conv.received>0?`<div class="text-sm text-muted" style="margin-bottom:4px">Conventional</div>
+        <div class="bull-stats">
+          <div class="bull-stat">Rcvd: <span class="val">${b.conv.received}</span></div>
+          <div class="bull-stat">Suppl: <span class="val">${b.conv.supplied}</span></div>
+          <div class="bull-stat" style="background:rgba(6,182,212,0.1);color:var(--cyan)">Avail: <span class="val" style="color:var(--cyan)">${ca}</span></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill conv" style="width:${convPct}%"></div></div>`:''}
+        ${b.sex.received>0?`<div class="text-sm text-muted" style="margin-bottom:4px;margin-top:8px">Sex Sorted</div>
+        <div class="bull-stats">
+          <div class="bull-stat">Rcvd: <span class="val">${b.sex.received}</span></div>
+          <div class="bull-stat">Suppl: <span class="val">${b.sex.supplied}</span></div>
+          <div class="bull-stat" style="background:rgba(168,85,247,0.1);color:var(--purple)">Avail: <span class="val" style="color:var(--purple)">${sa}</span></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill sex" style="width:${sexPct}%"></div></div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // Fixed items stock
+  const fiItems = DB.getArr('fixedItems');
+  const fiRows = fiItems.map(name=>{
+    const f = fixed[name]||{available:0,nearestExpiry:null};
+    const status = getExpiryStatus(f.nearestExpiry);
+    const badge = status==='expired'?`<span class="badge badge-red">❌ Expired</span>`:
+                  status==='expiring'?`<span class="badge badge-yellow">⚠️ ${f.nearestExpiry}</span>`:
+                  status==='valid'?`<span class="badge badge-green">✅ ${f.nearestExpiry}</span>`: '';
+    return `<div class="fi-row">
+      <div class="fi-name">${name}</div>
+      <div class="fi-qty">${f.available||0} units</div>
+      <div class="fi-expiry">${badge}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('fixed-stock-list').innerHTML = fiRows || `<div class="text-muted text-sm">No fixed items configured</div>`;
+}
+
+// ============================================================
+// PURCHASE FORMS
+// ============================================================
+let semenLineItems = [];
+let fixedLineItems = [];
+
+function initPurchaseForms(){
+  if(semenLineItems.length===0) addSemenLineItem();
+  if(fixedLineItems.length===0) addFixedLineItem();
+}
+
+function switchPOTab(tab){
+  document.getElementById('po-tab-semen').classList.toggle('active', tab==='semen');
+  document.getElementById('po-tab-fixed').classList.toggle('active', tab==='fixed');
+  document.getElementById('po-semen-form').classList.toggle('hidden', tab!=='semen');
+  document.getElementById('po-fixed-form').classList.toggle('hidden', tab!=='fixed');
+}
+
+function uid(){ return Date.now()+'_'+Math.random().toString(36).substr(2,6); }
+
+function addSemenLineItem(){
+  const id = uid();
+  semenLineItems.push({id});
+  renderSemenLineItems();
+}
+
+function removeSemenLineItem(id){
+  semenLineItems = semenLineItems.filter(i=>i.id!==id);
+  renderSemenLineItems();
+}
+
+function renderSemenLineItems(){
+  const container = document.getElementById('semen-line-items');
+  if(semenLineItems.length===0){ container.innerHTML=''; updateSemenGST(); return; }
+  container.innerHTML = semenLineItems.map((item,idx)=>`
+    <div class="line-item" id="sli-${item.id}">
+      <div class="line-item-header">
+        <span>Item ${idx+1}</span>
+        ${semenLineItems.length>1?`<button class="btn-xs btn-danger" onclick="removeSemenLineItem('${item.id}')">Remove</button>`:''}
+      </div>
+      <div class="line-item-grid">
+        <div class="field mb-0">
+          <label>Bull Name</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="sli-bull-${item.id}" placeholder="Bull name" autocomplete="off"
+              oninput="bullAutocomplete(this,'sli-bull-list-${item.id}')" onblur="setTimeout(()=>document.getElementById('sli-bull-list-${item.id}').classList.add('hidden'),200)">
+            <div class="autocomplete-list hidden" id="sli-bull-list-${item.id}"></div>
+          </div>
+        </div>
+        <div class="field mb-0"><label>Semen No.</label><input type="text" id="sli-sno-${item.id}" placeholder="SN-001"></div>
+        <div class="field mb-0">
+          <label>Type</label>
+          <select id="sli-type-${item.id}">
+            <option value="Conventional">Conventional</option>
+            <option value="Sex Sorted">Sex Sorted</option>
+          </select>
+        </div>
+        <div class="field mb-0"><label>Qty (doses)</label><input type="number" id="sli-qty-${item.id}" placeholder="100" oninput="updateSemenGST()"></div>
+        <div class="field mb-0"><label>Rate ₹</label><input type="number" id="sli-rate-${item.id}" placeholder="50" oninput="updateSemenGST()"></div>
+        <div class="field mb-0"><label>GST %</label><input type="number" id="sli-gst-${item.id}" placeholder="5" value="5" oninput="updateSemenGST()"></div>
+      </div>
+    </div>
+  `).join('');
+  updateSemenGST();
+}
+
+function bullAutocomplete(input, listId){
+  const val = input.value.toLowerCase();
+  const list = document.getElementById(listId);
+  if(!val){ list.classList.add('hidden'); return; }
+  const bulls = calcBullStock();
+  const existing = Object.keys(bulls);
+  const matches = existing.filter(b=>b.toLowerCase().includes(val));
+  const display = matches.length ? matches : (val.length>0?[input.value]:[]);
+  list.innerHTML = display.map(b=>{
+    const s = bulls[b];
+    const convAvail = s?(s.conv.received-s.conv.supplied):0;
+    const sexAvail = s?(s.sex.received-s.sex.supplied):0;
+    return `<div class="autocomplete-item" onclick="selectBull('${input.id}','${b}','${listId}')">${b}${s?`<span class="stock-badge">C:${convAvail} S:${sexAvail}</span>`:'<span class="stock-badge">New</span>'}</div>`;
+  }).join('');
+  list.classList.remove('hidden');
+}
+
+function selectBull(inputId, name, listId){
+  document.getElementById(inputId).value = name;
+  document.getElementById(listId).classList.add('hidden');
+}
+
+function getSemenLineValues(){
+  return semenLineItems.map(item=>({
+    bullName: document.getElementById('sli-bull-'+item.id)?.value||'',
+    semenNo: document.getElementById('sli-sno-'+item.id)?.value||'',
+    type: document.getElementById('sli-type-'+item.id)?.value||'Conventional',
+    qty: Number(document.getElementById('sli-qty-'+item.id)?.value)||0,
+    rate: Number(document.getElementById('sli-rate-'+item.id)?.value)||0,
+    gstPct: Number(document.getElementById('sli-gst-'+item.id)?.value)||0,
+  }));
+}
+
+function calcLineGST(items){
+  let baseTotal=0, gstTotal=0;
+  items.forEach(i=>{
+    const base = i.qty*i.rate;
+    const gst = base*(i.gstPct/100);
+    baseTotal+=base; gstTotal+=gst;
+  });
+  return {baseTotal, gstTotal, grandTotal: baseTotal+gstTotal};
+}
+
+function updateSemenGST(){
+  const items = getSemenLineValues();
+  const {baseTotal,gstTotal,grandTotal} = calcLineGST(items);
+  const el = document.getElementById('spo-gst-summary');
+  const content = document.getElementById('spo-gst-content');
+  if(items.length>0 && grandTotal>0){
+    el.style.display='';
+    content.innerHTML = `<div class="gst-summary">
+      <div class="gst-row"><span>Base Amount</span><span>₹${baseTotal.toFixed(2)}</span></div>
+      <div class="gst-row"><span>GST Amount</span><span>₹${gstTotal.toFixed(2)}</span></div>
+      <div class="gst-row total"><span>Grand Total</span><span>₹${grandTotal.toFixed(2)}</span></div>
+    </div>`;
+  } else { el.style.display='none'; }
+}
+
+function addFixedLineItem(){
+  const id = uid();
+  fixedLineItems.push({id});
+  renderFixedLineItems();
+}
+
+function removeFixedLineItem(id){
+  fixedLineItems = fixedLineItems.filter(i=>i.id!==id);
+  renderFixedLineItems();
+}
+
+function renderFixedLineItems(){
+  const container = document.getElementById('fixed-line-items');
+  const fiItems = DB.getArr('fixedItems');
+  if(fixedLineItems.length===0){ container.innerHTML=''; updateFixedGST(); return; }
+  container.innerHTML = fixedLineItems.map((item,idx)=>`
+    <div class="line-item" id="fli-${item.id}">
+      <div class="line-item-header">
+        <span>Item ${idx+1}</span>
+        ${fixedLineItems.length>1?`<button class="btn-xs btn-danger" onclick="removeFixedLineItem('${item.id}')">Remove</button>`:''}
+      </div>
+      <div class="line-item-grid">
+        <div class="field mb-0">
+          <label>Item Name</label>
+          <select id="fli-name-${item.id}">
+            ${fiItems.map(f=>`<option value="${f}">${f}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field mb-0"><label>Expiry Date</label><input type="date" id="fli-exp-${item.id}"></div>
+        <div class="field mb-0"><label>Qty</label><input type="number" id="fli-qty-${item.id}" placeholder="50" oninput="updateFixedGST()"></div>
+        <div class="field mb-0"><label>Rate ₹</label><input type="number" id="fli-rate-${item.id}" placeholder="20" oninput="updateFixedGST()"></div>
+        <div class="field mb-0"><label>GST %</label><input type="number" id="fli-gst-${item.id}" placeholder="18" value="18" oninput="updateFixedGST()"></div>
+      </div>
+    </div>
+  `).join('');
+  updateFixedGST();
+}
+
+function getFixedLineValues(){
+  return fixedLineItems.map(item=>({
+    itemName: document.getElementById('fli-name-'+item.id)?.value||'',
+    expiry: document.getElementById('fli-exp-'+item.id)?.value||'',
+    qty: Number(document.getElementById('fli-qty-'+item.id)?.value)||0,
+    rate: Number(document.getElementById('fli-rate-'+item.id)?.value)||0,
+    gstPct: Number(document.getElementById('fli-gst-'+item.id)?.value)||0,
+  }));
+}
+
+function updateFixedGST(){
+  const items = getFixedLineValues();
+  const {baseTotal,gstTotal,grandTotal} = calcLineGST(items);
+  const el = document.getElementById('fpo-gst-summary');
+  const content = document.getElementById('fpo-gst-content');
+  if(items.length>0 && grandTotal>0){
+    el.style.display='';
+    content.innerHTML = `<div class="gst-summary">
+      <div class="gst-row"><span>Base Amount</span><span>₹${baseTotal.toFixed(2)}</span></div>
+      <div class="gst-row"><span>GST Amount</span><span>₹${gstTotal.toFixed(2)}</span></div>
+      <div class="gst-row total"><span>Grand Total</span><span>₹${grandTotal.toFixed(2)}</span></div>
+    </div>`;
+  } else { el.style.display='none'; }
+}
+
+function saveSemenPO(){
+  const poNo = document.getElementById('spo-no').value.trim();
+  const poDate = document.getElementById('spo-date').value;
+  const supplier = document.getElementById('spo-supplier').value.trim();
+  if(!poNo||!poDate||!supplier){ showAlert('⚠️','Missing Fields','PO Number, Date, and Supplier are required.'); return; }
+  const items = getSemenLineValues();
+  if(items.every(i=>!i.bullName)){ showAlert('⚠️','Missing Items','Add at least one line item with a Bull Name.'); return; }
+  const gst = calcLineGST(items);
+  const po = {
+    id: uid(), type:'semen', poNo, poDate,
+    receiptDate: document.getElementById('spo-rdate').value,
+    supplier, items, ...gst,
+    createdAt: new Date().toISOString(), source:'manual'
+  };
+  DB.push('semenPOs', po);
+  showAlert('✅','Saved!',`Semen PO ${poNo} saved successfully.`);
+  resetSemenForm();
+}
+
+function resetSemenForm(){
+  document.getElementById('spo-no').value='';
+  document.getElementById('spo-supplier').value='';
+  document.getElementById('spo-date').value=today();
+  document.getElementById('spo-rdate').value=today();
+  semenLineItems=[];
+  addSemenLineItem();
+}
+
+function saveFixedPO(){
+  const poNo = document.getElementById('fpo-no').value.trim();
+  const poDate = document.getElementById('fpo-date').value;
+  const supplier = document.getElementById('fpo-supplier').value.trim();
+  if(!poNo||!poDate||!supplier){ showAlert('⚠️','Missing Fields','PO Number, Date, and Supplier are required.'); return; }
+  const items = getFixedLineValues();
+  if(items.every(i=>!i.qty)){ showAlert('⚠️','Missing Items','Add at least one item with quantity.'); return; }
+  const gst = calcLineGST(items);
+  const po = {
+    id: uid(), type:'fixed', poNo, poDate,
+    receiptDate: document.getElementById('fpo-rdate').value,
+    supplier, items, ...gst,
+    createdAt: new Date().toISOString(), source:'manual'
+  };
+  DB.push('fixedPOs', po);
+  showAlert('✅','Saved!',`Fixed Items PO ${poNo} saved successfully.`);
+  resetFixedForm();
+}
+
+function resetFixedForm(){
+  document.getElementById('fpo-no').value='';
+  document.getElementById('fpo-supplier').value='';
+  document.getElementById('fpo-date').value=today();
+  document.getElementById('fpo-rdate').value=today();
+  fixedLineItems=[];
+  addFixedLineItem();
+}
+
+// ============================================================
+// SUPPLY FORM
+// ============================================================
+let supplyItems = [];
+
+function initSupplyForm(){
+  if(supplyItems.length===0) addSupplyItem();
+}
+
+function calcKM(){
+  const o = Number(document.getElementById('sup-km-open').value)||0;
+  const c = Number(document.getElementById('sup-km-close').value)||0;
+  const disp = document.getElementById('km-total-disp');
+  if(o&&c&&c>o){
+    disp.textContent = `Total KM: ${c-o} km`;
+    disp.classList.remove('hidden');
+  } else { disp.classList.add('hidden'); }
+}
+
+function centerSearch(inputId, listId, codeId){
+  const val = document.getElementById(inputId).value.toLowerCase();
+  const list = document.getElementById(listId);
+  const centers = DB.getArr('centers');
+  if(!val){ list.classList.add('hidden'); return; }
+  const matches = centers.filter(c=>
+    c.name.toLowerCase().includes(val)||c.code.toLowerCase().includes(val)
+  );
+  list.innerHTML = matches.map(c=>`<div class="autocomplete-item" onclick="selectCenter('${inputId}','${c.code}','${c.name}','${listId}','${codeId}')">${c.name} <span class="stock-badge">${c.code}</span></div>`).join('');
+  list.classList.toggle('hidden', matches.length===0);
+}
+
+function selectCenter(inputId, code, name, listId, codeId){
+  document.getElementById(inputId).value = name;
+  document.getElementById(codeId).value = code;
+  document.getElementById(listId).classList.add('hidden');
+}
+
+function addSupplyItem(){
+  const id = uid();
+  supplyItems.push({id});
+  renderSupplyItems();
+}
+
+function removeSupplyItem(id){
+  supplyItems = supplyItems.filter(i=>i.id!==id);
+  renderSupplyItems();
+}
+
+function renderSupplyItems(){
+  const container = document.getElementById('supply-items-list');
+  const bulls = calcBullStock();
+  const fixed = calcFixedStock();
+  const fiItems = DB.getArr('fixedItems');
+  const bullNames = Object.keys(bulls).filter(b=>{
+    const b2=bulls[b];
+    return (b2.conv.received-b2.conv.supplied)>0 || (b2.sex.received-b2.sex.supplied)>0;
+  });
+
+  container.innerHTML = supplyItems.map((item,idx)=>{
+    return `<div class="line-item" id="sui-${item.id}">
+      <div class="line-item-header">
+        <span>Item ${idx+1}</span>
+        ${supplyItems.length>1?`<button class="btn-xs btn-danger" onclick="removeSupplyItem('${item.id}')">Remove</button>`:''}
+      </div>
+      <div class="field mb-0">
+        <label>Item Type</label>
+        <select id="sui-type-${item.id}" onchange="supplyItemTypeChange('${item.id}')">
+          <option value="semen">Semen</option>
+          <option value="fixed">Fixed Item</option>
+        </select>
+      </div>
+      <div id="sui-semen-fields-${item.id}">
+        <div class="field mb-0 mt-8">
+          <label>Bull Name</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="sui-bull-${item.id}" placeholder="Search bull..." autocomplete="off"
+              oninput="supplyBullSearch(this,'${item.id}')" onblur="setTimeout(()=>document.getElementById('sui-bull-list-${item.id}').classList.add('hidden'),200)">
+            <div class="autocomplete-list hidden" id="sui-bull-list-${item.id}"></div>
+          </div>
+        </div>
+        <div class="field mb-0 mt-8">
+          <label>Semen Type</label>
+          <select id="sui-stype-${item.id}" onchange="checkSupplyStock()">
+            <option value="Conventional">Conventional</option>
+            <option value="Sex Sorted">Sex Sorted</option>
+          </select>
+        </div>
+        <div class="field mb-0 mt-8">
+          <label>Qty</label>
+          <input type="number" id="sui-qty-${item.id}" placeholder="10" oninput="checkSupplyStock()">
+        </div>
+        <div id="sui-stock-info-${item.id}" style="font-size:12px;color:var(--text2);margin-top:4px"></div>
+      </div>
+      <div id="sui-fixed-fields-${item.id}" style="display:none">
+        <div class="field mb-0 mt-8">
+          <label>Fixed Item</label>
+          <select id="sui-fname-${item.id}" onchange="checkSupplyStock()">
+            ${fiItems.map(f=>`<option value="${f}">${f}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field mb-0 mt-8">
+          <label>Qty</label>
+          <input type="number" id="sui-fqty-${item.id}" placeholder="5" oninput="checkSupplyStock()">
+        </div>
+        <div id="sui-fstock-info-${item.id}" style="font-size:12px;color:var(--text2);margin-top:4px"></div>
+      </div>
+    </div>`;
+  }).join('');
+  checkSupplyStock();
+}
+
+function supplyItemTypeChange(id){
+  const type = document.getElementById('sui-type-'+id).value;
+  document.getElementById('sui-semen-fields-'+id).style.display = type==='semen'?'':'none';
+  document.getElementById('sui-fixed-fields-'+id).style.display = type==='fixed'?'':'none';
+  checkSupplyStock();
+}
+
+function supplyBullSearch(input, id){
+  const val = input.value.toLowerCase();
+  const listId = 'sui-bull-list-'+id;
+  const list = document.getElementById(listId);
+  if(!val){ list.classList.add('hidden'); return; }
+  const bulls = calcBullStock();
+  const availBulls = Object.keys(bulls).filter(b=>{
+    const bv=bulls[b];
+    return (bv.conv.received-bv.conv.supplied)>0||(bv.sex.received-bv.sex.supplied)>0;
+  });
+  const matches = availBulls.filter(b=>b.toLowerCase().includes(val));
+  list.innerHTML = matches.map(b=>{
+    const bv=bulls[b];
+    const ca=bv.conv.received-bv.conv.supplied;
+    const sa=bv.sex.received-bv.sex.supplied;
+    return `<div class="autocomplete-item" onclick="selectSupplyBull('${input.id}','${b}','${listId}','${id}')">${b}<span class="stock-badge">C:${ca} S:${sa}</span></div>`;
+  }).join('');
+  list.classList.toggle('hidden', matches.length===0);
+}
+
+function selectSupplyBull(inputId, name, listId, itemId){
+  document.getElementById(inputId).value = name;
+  document.getElementById(listId).classList.add('hidden');
+  checkSupplyStock();
+  // update stock info
+  const bulls = calcBullStock();
+  const b = bulls[name];
+  if(b){
+    const ca=b.conv.received-b.conv.supplied;
+    const sa=b.sex.received-b.sex.supplied;
+    document.getElementById('sui-stock-info-'+itemId).innerHTML = `Available: <b style="color:var(--cyan)">Conv: ${ca}</b> | <b style="color:var(--purple)">Sex: ${sa}</b>`;
+  }
+}
+
+function checkSupplyStock(){
+  let hardBlock = false;
+  let blockMsgs = [];
+  let softWarnItems = [];
+  const fixed = calcFixedStock();
+  const bulls = calcBullStock();
+
+  supplyItems.forEach(item=>{
+    const typeEl = document.getElementById('sui-type-'+item.id);
+    if(!typeEl) return;
+    const type = typeEl.value;
+    if(type==='semen'){
+      const bullName = document.getElementById('sui-bull-'+item.id)?.value||'';
+      const stype = document.getElementById('sui-stype-'+item.id)?.value||'Conventional';
+      const qty = Number(document.getElementById('sui-qty-'+item.id)?.value)||0;
+      if(bullName && qty>0){
+        const avail = getBullStockAvailable(bullName, stype);
+        const infoEl = document.getElementById('sui-stock-info-'+item.id);
+        if(infoEl){
+          const remaining = avail - qty;
+          infoEl.innerHTML = `Available: <b style="color:${remaining<0?'var(--red)':'var(--green)'}">${avail}</b> → After supply: <b style="color:${remaining<0?'var(--red)':'var(--cyan)'}">${remaining}</b>`;
+        }
+        if(qty > avail){
+          hardBlock = true;
+          blockMsgs.push(`${bullName} (${stype}): Need ${qty}, only ${avail} available.`);
+        }
+      }
+    } else {
+      const fname = document.getElementById('sui-fname-'+item.id)?.value||'';
+      const qty = Number(document.getElementById('sui-fqty-'+item.id)?.value)||0;
+      if(fname && qty>0){
+        const avail = fixed[fname]?.available||0;
+        const infoEl = document.getElementById('sui-fstock-info-'+item.id);
+        if(infoEl){
+          const remaining = avail - qty;
+          infoEl.innerHTML = `Available: <b style="color:${remaining<0?'var(--yellow)':'var(--green)'}">${avail}</b> → After: <b style="color:${remaining<0?'var(--yellow)':'var(--cyan)'}">${remaining}</b>`;
+        }
+        if(qty > avail){ softWarnItems.push(`${fname}: Need ${qty}, only ${avail} in stock.`); }
+      }
+    }
+  });
+
+  const blockEl = document.getElementById('supply-hard-block');
+  const saveBtn = document.getElementById('save-supply-btn');
+  if(hardBlock){
+    blockEl.classList.add('show');
+    document.getElementById('supply-block-msg').textContent = blockMsgs.join(' | ');
+    saveBtn.disabled = true;
+    saveBtn.style.opacity = '0.4';
+  } else {
+    blockEl.classList.remove('show');
+    saveBtn.disabled = false;
+    saveBtn.style.opacity = '1';
+  }
+}
+
+function getSupplyItemValues(){
+  return supplyItems.map(item=>{
+    const type = document.getElementById('sui-type-'+item.id)?.value||'semen';
+    if(type==='semen'){
+      return {
+        itemType:'semen',
+        bullName: document.getElementById('sui-bull-'+item.id)?.value||'',
+        type: document.getElementById('sui-stype-'+item.id)?.value||'Conventional',
+        qty: Number(document.getElementById('sui-qty-'+item.id)?.value)||0,
+      };
+    } else {
+      return {
+        itemType:'fixed',
+        itemName: document.getElementById('sui-fname-'+item.id)?.value||'',
+        qty: Number(document.getElementById('sui-fqty-'+item.id)?.value)||0,
+      };
+    }
+  });
+}
+
+function saveSupply(){
+  const date = document.getElementById('sup-date').value;
+  const receipt = document.getElementById('sup-receipt').value.trim();
+  const fromName = document.getElementById('sup-from').value.trim();
+  const fromCode = document.getElementById('sup-from-code').value;
+  const toName = document.getElementById('sup-to').value.trim();
+  const toCode = document.getElementById('sup-to-code').value;
+  if(!date||!receipt||!fromName||!toName){ showAlert('⚠️','Missing Fields','Date, Receipt No., From and To Center are required.'); return; }
+
+  const items = getSupplyItemValues();
+  const openKM = Number(document.getElementById('sup-km-open').value)||0;
+  const closeKM = Number(document.getElementById('sup-km-close').value)||0;
+  const totalKM = closeKM>openKM ? closeKM-openKM : 0;
+
+  // Check soft warn for fixed items
+  const fixed = calcFixedStock();
+  const warnItems = items.filter(i=>i.itemType==='fixed').filter(i=>{
+    const avail = fixed[i.itemName]?.available||0;
+    return i.qty > avail;
+  });
+
+  const doSave = ()=>{
+    const rec = {
+      id: uid(), type:'supply', date, receipt,
+      fromName, fromCode, toName, toCode,
+      openKM, closeKM, totalKM,
+      note: document.getElementById('sup-note').value,
+      items, createdAt: new Date().toISOString(), source:'manual'
+    };
+    DB.push('supplies', rec);
+    showAlert('✅','Saved!',`Supply record ${receipt} saved.`);
+    resetSupplyForm();
+  };
+
+  if(warnItems.length>0){
+    document.getElementById('soft-warn-msg').textContent = warnItems.map(i=>`${i.itemName}: Need ${i.qty}, only ${fixed[i.itemName]?.available||0} available.`).join('\n');
+    document.getElementById('soft-warn-proceed').onclick = ()=>{ closeModal('soft-warn-modal'); doSave(); };
+    document.getElementById('soft-warn-modal').classList.add('active');
+  } else { doSave(); }
+}
+
+function resetSupplyForm(){
+  ['sup-date','sup-receipt','sup-from','sup-from-code','sup-to','sup-to-code','sup-km-open','sup-km-close','sup-note'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('sup-date').value = today();
+  document.getElementById('km-total-disp').classList.add('hidden');
+  supplyItems=[];
+  addSupplyItem();
+}
+
+// ============================================================
+// RECORDS PAGE
+// ============================================================
+function setRecordFilter(f, el){
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderRecords();
+}
+
+function renderRecords(){
+  const semenPOs = DB.getArr('semenPOs');
+  const fixedPOs = DB.getArr('fixedPOs');
+  const supplies = DB.getArr('supplies');
+  const todayStr = today();
+  let allRecords = [];
+
+  if(currentFilter!=='supply'){
+    semenPOs.forEach(p=>allRecords.push({...p, recType:'semenPO'}));
+    fixedPOs.forEach(p=>allRecords.push({...p, recType:'fixedPO'}));
+  }
+  if(currentFilter!=='purchase'){
+    supplies.forEach(s=>allRecords.push({...s, recType:'supply'}));
+  }
+
+  // filter
+  if(currentFilter==='today'){
+    allRecords = allRecords.filter(r=>r.poDate===todayStr||r.date===todayStr);
+  } else if(currentFilter==='expiring'){
+    allRecords = allRecords.filter(r=>{
+      if(r.recType==='fixedPO'){
+        return r.items.some(i=>{
+          const s=getExpiryStatus(i.expiry);
+          return s==='expiring'||s==='expired';
+        });
+      }
+      return false;
+    });
+  }
+
+  // sort by date desc
+  allRecords.sort((a,b)=>{
+    const da = new Date(a.poDate||a.date||a.createdAt);
+    const db2 = new Date(b.poDate||b.date||b.createdAt);
+    return db2-da;
+  });
+
+  const list = document.getElementById('records-list');
+  if(allRecords.length===0){
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No records found</div><div class="empty-sub">Records will appear here</div></div>`;
+    return;
+  }
+  list.innerHTML = allRecords.map(r=>renderRecordCard(r)).join('');
+}
+
+function renderRecordCard(r){
+  const canEdit = currentRole==='monitor';
+  const isMonitor = currentRole==='monitor';
+  const editedBadge = r.editedAt ? `<span class="badge-edited">✏️ ${r.editedAt.split('T')[0]}</span>` : '';
+  const srcBadge = r.source==='excel'?`<span class="badge badge-purple" style="font-size:10px">Excel Import</span>`:'';
+
+  if(r.recType==='semenPO'){
+    const {baseTotal,gstTotal,grandTotal} = calcLineGST(r.items||[]);
+    return `<div class="record-card">
+      <div class="record-header">
+        <div>
+          <div class="record-type" style="color:var(--cyan)">Semen PO ${srcBadge} ${editedBadge}</div>
+          <div class="record-id">${r.poNo}</div>
+          <div class="record-meta">📅 ${r.poDate} • Supplier: ${r.supplier}</div>
+          ${r.receiptDate?`<div class="record-meta">Receipt: ${r.receiptDate}</div>`:''}
+        </div>
+        ${isMonitor?`<div class="record-actions">
+          <button class="btn btn-ghost btn-xs" onclick="editRecord('${r.id}','semen')">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteRecord('${r.id}','semenPOs')">🗑</button>
+        </div>`:''}
+      </div>
+      <hr class="divider">
+      ${(r.items||[]).map(i=>`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">
+        <b>${i.bullName||'—'}</b> · ${i.type} · ${i.semenNo||'—'} · <b>${i.qty} doses</b> · ₹${i.rate}/dose · GST ${i.gstPct}%
+      </div>`).join('')}
+      <div class="gst-summary mt-8">
+        <div class="gst-row"><span>Base</span><span>₹${(r.baseTotal||baseTotal).toFixed(2)}</span></div>
+        <div class="gst-row"><span>GST</span><span>₹${(r.gstTotal||gstTotal).toFixed(2)}</span></div>
+        <div class="gst-row total"><span>Total</span><span>₹${(r.grandTotal||grandTotal).toFixed(2)}</span></div>
+      </div>
+    </div>`;
+  }
+
+  if(r.recType==='fixedPO'){
+    const {baseTotal,gstTotal,grandTotal} = calcLineGST(r.items||[]);
+    return `<div class="record-card">
+      <div class="record-header">
+        <div>
+          <div class="record-type" style="color:var(--green)">Fixed Items PO ${srcBadge} ${editedBadge}</div>
+          <div class="record-id">${r.poNo}</div>
+          <div class="record-meta">📅 ${r.poDate} • Supplier: ${r.supplier}</div>
+        </div>
+        ${isMonitor?`<div class="record-actions">
+          <button class="btn btn-ghost btn-xs" onclick="editRecord('${r.id}','fixed')">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteRecord('${r.id}','fixedPOs')">🗑</button>
+        </div>`:''}
+      </div>
+      <hr class="divider">
+      ${(r.items||[]).map(i=>{
+        const s=getExpiryStatus(i.expiry);
+        const eb=s==='expired'?`<span class="badge badge-red">❌</span>`:s==='expiring'?`<span class="badge badge-yellow">⚠️</span>`:s==='valid'?`<span class="badge badge-green">✅</span>`:'';
+        return `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">
+          <b>${i.itemName}</b> ${eb} · <b>${i.qty}</b> · ₹${i.rate} · GST ${i.gstPct}% · Exp: ${i.expiry||'—'}
+        </div>`;
+      }).join('')}
+      <div class="gst-summary mt-8">
+        <div class="gst-row"><span>Base</span><span>₹${(r.baseTotal||baseTotal).toFixed(2)}</span></div>
+        <div class="gst-row"><span>GST</span><span>₹${(r.gstTotal||gstTotal).toFixed(2)}</span></div>
+        <div class="gst-row total"><span>Total</span><span>₹${(r.grandTotal||grandTotal).toFixed(2)}</span></div>
+      </div>
+    </div>`;
+  }
+
+  if(r.recType==='supply'){
+    return `<div class="record-card">
+      <div class="record-header">
+        <div>
+          <div class="record-type" style="color:var(--green)">Supply Record ${editedBadge}</div>
+          <div class="record-id">${r.receipt}</div>
+          <div class="record-meta">📅 ${r.date}</div>
+        </div>
+        ${isMonitor?`<div class="record-actions">
+          <button class="btn btn-danger btn-xs" onclick="deleteRecord('${r.id}','supplies')">🗑</button>
+        </div>`:''}
+      </div>
+      <div class="supply-route">
+        <div><div>${r.fromName}</div><div class="center-code">${r.fromCode}</div></div>
+        <div class="arrow">→</div>
+        <div><div>${r.toName}</div><div class="center-code">${r.toCode}</div></div>
+      </div>
+      ${r.totalKM>0?`<div class="text-sm text-muted">🚗 ${r.openKM||0} → ${r.closeKM||0} km · Total: <b class="text-cyan">${r.totalKM} km</b></div>`:''}
+      ${r.note?`<div class="text-sm text-muted mt-8">📝 ${r.note}</div>`:''}
+      <hr class="divider">
+      ${(r.items||[]).map(i=>{
+        if(i.itemType==='semen') return `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">🐂 <b>${i.bullName}</b> · ${i.type} · <b>${i.qty} doses</b></div>`;
+        return `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">📦 <b>${i.itemName}</b> · <b>${i.qty}</b></div>`;
+      }).join('')}
+    </div>`;
+  }
+  return '';
+}
+
+function deleteRecord(id, storeKey){
+  showConfirm('🗑','Delete Record','Are you sure you want to delete this record? This cannot be undone.', ()=>{
+    const arr = DB.getArr(storeKey).filter(r=>r.id!==id);
+    DB.save(storeKey, arr);
+    renderRecords();
+    renderStock();
+  });
+}
+
+function editRecord(id, type){
+  const storeKey = type==='semen'?'semenPOs':'fixedPOs';
+  const arr = DB.getArr(storeKey);
+  const rec = arr.find(r=>r.id===id);
+  if(!rec) return;
+
+  const modal = document.getElementById('edit-po-modal');
+  const content = document.getElementById('edit-po-content');
+
+  if(type==='semen'){
+    content.innerHTML = `
+      <div class="field"><label>PO Number</label><input type="text" id="ep-no" value="${rec.poNo}"></div>
+      <div class="field-row">
+        <div class="field"><label>PO Date</label><input type="date" id="ep-date" value="${rec.poDate}"></div>
+        <div class="field"><label>Receipt Date</label><input type="date" id="ep-rdate" value="${rec.receiptDate||''}"></div>
+      </div>
+      <div class="field"><label>Supplier</label><input type="text" id="ep-supplier" value="${rec.supplier}"></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Items (${rec.items.length}):</div>
+      ${rec.items.map((item,i)=>`<div class="card" style="margin-bottom:8px">
+        <div class="text-sm text-muted" style="margin-bottom:8px">Item ${i+1}</div>
+        <div class="field-row">
+          <div class="field mb-0"><label>Bull Name</label><input type="text" id="ep-bull-${i}" value="${item.bullName}"></div>
+          <div class="field mb-0"><label>Semen No.</label><input type="text" id="ep-sno-${i}" value="${item.semenNo||''}"></div>
+        </div>
+        <div class="field-row mt-8">
+          <div class="field mb-0"><label>Qty</label><input type="number" id="ep-qty-${i}" value="${item.qty}"></div>
+          <div class="field mb-0"><label>Rate</label><input type="number" id="ep-rate-${i}" value="${item.rate}"></div>
+          <div class="field mb-0"><label>GST%</label><input type="number" id="ep-gst-${i}" value="${item.gstPct}"></div>
+        </div>
+      </div>`).join('')}
+      <button class="btn btn-success btn-full" onclick="saveEditedRecord('${id}','semen',${rec.items.length})">Save Changes</button>
+    `;
+  } else {
+    content.innerHTML = `
+      <div class="field"><label>PO Number</label><input type="text" id="ep-no" value="${rec.poNo}"></div>
+      <div class="field-row">
+        <div class="field"><label>PO Date</label><input type="date" id="ep-date" value="${rec.poDate}"></div>
+        <div class="field"><label>Receipt Date</label><input type="date" id="ep-rdate" value="${rec.receiptDate||''}"></div>
+      </div>
+      <div class="field"><label>Supplier</label><input type="text" id="ep-supplier" value="${rec.supplier}"></div>
+      ${rec.items.map((item,i)=>`<div class="card" style="margin-bottom:8px">
+        <div class="text-sm text-muted" style="margin-bottom:8px">Item ${i+1}: ${item.itemName}</div>
+        <div class="field-row">
+          <div class="field mb-0"><label>Expiry</label><input type="date" id="ep-exp-${i}" value="${item.expiry||''}"></div>
+          <div class="field mb-0"><label>Qty</label><input type="number" id="ep-qty-${i}" value="${item.qty}"></div>
+          <div class="field mb-0"><label>Rate</label><input type="number" id="ep-rate-${i}" value="${item.rate}"></div>
+          <div class="field mb-0"><label>GST%</label><input type="number" id="ep-gst-${i}" value="${item.gstPct}"></div>
+        </div>
+      </div>`).join('')}
+      <button class="btn btn-success btn-full" onclick="saveEditedRecord('${id}','fixed',${rec.items.length})">Save Changes</button>
+    `;
+  }
+  modal.classList.add('active');
+}
+
+function saveEditedRecord(id, type, itemCount){
+  const storeKey = type==='semen'?'semenPOs':'fixedPOs';
+  const arr = DB.getArr(storeKey);
+  const idx = arr.findIndex(r=>r.id===id);
+  if(idx===-1) return;
+
+  arr[idx].poNo = document.getElementById('ep-no').value;
+  arr[idx].poDate = document.getElementById('ep-date').value;
+  arr[idx].receiptDate = document.getElementById('ep-rdate').value;
+  arr[idx].supplier = document.getElementById('ep-supplier').value;
+  arr[idx].editedAt = new Date().toISOString();
+
+  for(let i=0;i<itemCount;i++){
+    if(type==='semen'){
+      arr[idx].items[i].bullName = document.getElementById('ep-bull-'+i)?.value||arr[idx].items[i].bullName;
+      arr[idx].items[i].semenNo = document.getElementById('ep-sno-'+i)?.value||'';
+      arr[idx].items[i].qty = Number(document.getElementById('ep-qty-'+i)?.value)||0;
+      arr[idx].items[i].rate = Number(document.getElementById('ep-rate-'+i)?.value)||0;
+      arr[idx].items[i].gstPct = Number(document.getElementById('ep-gst-'+i)?.value)||0;
+    } else {
+      arr[idx].items[i].expiry = document.getElementById('ep-exp-'+i)?.value||'';
+      arr[idx].items[i].qty = Number(document.getElementById('ep-qty-'+i)?.value)||0;
+      arr[idx].items[i].rate = Number(document.getElementById('ep-rate-'+i)?.value)||0;
+      arr[idx].items[i].gstPct = Number(document.getElementById('ep-gst-'+i)?.value)||0;
+    }
+  }
+  const gst = calcLineGST(arr[idx].items);
+  Object.assign(arr[idx], gst);
+  DB.save(storeKey, arr);
+  closeModal('edit-po-modal');
+  renderRecords();
+  renderStock();
+  showAlert('✅','Updated','Record updated successfully.');
+}
+
+// ============================================================
+// SETTINGS (MONITOR)
+// ============================================================
+function renderSettings(){
+  if(currentRole!=='monitor') return;
+  renderPasswordSettings();
+  renderFixedItemsMgmt();
+  renderCenterList();
+}
+
+function renderPasswordSettings(){
+  const passwords = DB.get('passwords');
+  const roles = ['purchase','supply','monitor'];
+  document.getElementById('pw-settings').innerHTML = roles.map(r=>`
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">${r.charAt(0).toUpperCase()+r.slice(1)} Password</div>
+        <div class="settings-sub" id="pw-display-${r}">••••••••</div>
+      </div>
+      <div class="settings-action">
+        <button class="btn btn-ghost btn-sm" onclick="changePassword('${r}')">Change</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changePassword(role){
+  const newPwd = prompt(`Enter new password for ${role} role:`);
+  if(newPwd && newPwd.length>=4){
+    const passwords = DB.get('passwords');
+    passwords[role] = newPwd;
+    DB.set('passwords', passwords);
+    showAlert('✅','Password Updated',`Password for ${role} changed successfully.`);
+  } else if(newPwd !== null){
+    showAlert('⚠️','Too Short','Password must be at least 4 characters.');
+  }
+}
+
+function renderFixedItemsMgmt(){
+  const items = DB.getArr('fixedItems');
+  document.getElementById('fixed-items-mgmt').innerHTML = items.map((item,i)=>`
+    <div class="fi-row">
+      <div class="fi-name">${item}</div>
+      <button class="btn btn-danger btn-xs" onclick="removeFixedItem(${i})">Remove</button>
+    </div>
+  `).join('') || '<div class="text-muted text-sm">No items</div>';
+}
+
+function addFixedItem(){
+  const name = document.getElementById('new-fi-name').value.trim();
+  if(!name) return;
+  const items = DB.getArr('fixedItems');
+  if(items.includes(name)){ showAlert('⚠️','Duplicate','This item already exists.'); return; }
+  items.push(name);
+  DB.save('fixedItems', items);
+  document.getElementById('new-fi-name').value = '';
+  renderFixedItemsMgmt();
+  renderStock();
+}
+
+function removeFixedItem(idx){
+  showConfirm('🗑','Remove Item','Remove this fixed item from the list?', ()=>{
+    const items = DB.getArr('fixedItems');
+    items.splice(idx,1);
+    DB.save('fixedItems', items);
+    renderFixedItemsMgmt();
+    renderStock();
+  });
+}
+
+function renderCenterList(){
+  const centers = DB.getArr('centers');
+  document.getElementById('center-list').innerHTML = centers.length===0
+    ? '<div class="text-muted text-sm">No centers added. Import CSV or add manually.</div>'
+    : centers.map((c,i)=>`<div class="fi-row">
+        <div>
+          <div class="fi-name">${c.name}</div>
+          <div class="text-sm" style="color:var(--text3);font-family:var(--mono)">${c.code}${c.doj?' · DOJ: '+c.doj:''}</div>
+        </div>
+        <button class="btn btn-danger btn-xs" onclick="deleteCenter(${i})">🗑</button>
+      </div>`).join('');
+}
+
+function openAddCenterModal(){
+  document.getElementById('nc-code').value='';
+  document.getElementById('nc-name').value='';
+  document.getElementById('nc-doj').value='';
+  document.getElementById('add-center-modal').classList.add('active');
+}
+
+function saveCenter(){
+  const code = document.getElementById('nc-code').value.trim();
+  const name = document.getElementById('nc-name').value.trim();
+  const doj = document.getElementById('nc-doj').value;
+  if(!code||!name){ showAlert('⚠️','Missing Fields','Code and Name are required.'); return; }
+  const centers = DB.getArr('centers');
+  if(centers.find(c=>c.code===code)){ showAlert('⚠️','Duplicate','A center with this code already exists.'); return; }
+  centers.push({code,name,doj});
+  DB.save('centers', centers);
+  closeModal('add-center-modal');
+  renderCenterList();
+  showAlert('✅','Added',`Center "${name}" added.`);
+}
+
+function deleteCenter(idx){
+  showConfirm('🗑','Delete Center','Delete this center?', ()=>{
+    const centers = DB.getArr('centers');
+    centers.splice(idx,1);
+    DB.save('centers', centers);
+    renderCenterList();
+  });
+}
+
+function importCenters(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const text = e.target.result;
+    const rows = parseCSVText(text);
+    if(rows.length<2){ showAlert('⚠️','Error','No data found in file.'); return; }
+    const headers = rows[0].map(h=>h.trim().toLowerCase());
+    const codeIdx = headers.findIndex(h=>h.includes('code'));
+    const nameIdx = headers.findIndex(h=>h.includes('name'));
+    const dojIdx = headers.findIndex(h=>h.includes('doj'));
+    if(codeIdx===-1||nameIdx===-1){ showAlert('⚠️','Error','File must have "Center Code" and "Center Name" columns.'); return; }
+    const centers = DB.getArr('centers');
+    let added=0;
+    rows.slice(1).forEach(row=>{
+      const code=(row[codeIdx]||'').trim();
+      const name=(row[nameIdx]||'').trim();
+      const doj=dojIdx>=0?(row[dojIdx]||'').trim():'';
+      if(code&&name&&!centers.find(c=>c.code===code)){
+        centers.push({code,name,doj});
+        added++;
+      }
+    });
+    DB.save('centers', centers);
+    renderCenterList();
+    showAlert('✅','Imported',`${added} centers imported.`);
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function downloadCenterTemplate(){
+  const csv = 'Center Code,Center Name,DOJ\nCC001,Main Center,2020-01-01\nCC002,Sub Center,2021-06-15';
+  downloadFile(csv, 'center_template.csv', 'text/csv');
+}
+
+// ============================================================
+// BULK PO IMPORT
+// ============================================================
+function openImportModal(){
+  importType='semen';
+  importRows=[];
+  document.getElementById('import-preview-area').innerHTML='';
+  document.getElementById('import-modal').classList.add('active');
+}
+
+function switchImportTab(tab){
+  importType=tab;
+  document.getElementById('imp-tab-semen').classList.toggle('active',tab==='semen');
+  document.getElementById('imp-tab-fixed').classList.toggle('active',tab==='fixed');
+  importRows=[];
+  document.getElementById('import-preview-area').innerHTML='';
+  const p=document.querySelector('#import-content p');
+  if(p) p.textContent=tab==='semen'
+    ?'Columns: PO Number, PO Date, Receipt Date, Supplier, Bull Name, Semen No, Type, Qty, Rate, GST%'
+    :'Columns: PO Number, PO Date, Receipt Date, Supplier, Item Name, Expiry Date, Qty, Rate, GST%';
+}
+
+function downloadPOTemplate(type){
+  let csv;
+  if(type==='semen'){
+    csv='PO Number,PO Date,Receipt Date,Supplier,Bull Name,Semen No,Type,Qty,Rate,GST%\nSPO-001,2024-01-01,2024-01-05,ABC Genetics,Bull A,SN001,Conventional,100,50,5';
+  } else {
+    csv='PO Number,PO Date,Receipt Date,Supplier,Item Name,Expiry Date,Qty,Rate,GST%\nFPO-001,2024-01-01,2024-01-05,XYZ Supplies,Sheath,2025-12-31,500,2,18';
+  }
+  downloadFile(csv, `${type}_po_template.csv`, 'text/csv');
+}
+
+function handlePOImport(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const rows = parseCSVText(e.target.result);
+    if(rows.length<2){ showAlert('⚠️','Error','No data found.'); return; }
+    importRows = rows;
+    showImportPreview(rows);
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function showImportPreview(rows){
+  const area = document.getElementById('import-preview-area');
+  const headers = rows[0];
+  const dataRows = rows.slice(1).filter(r=>r.some(c=>c.trim()));
+  area.innerHTML = `
+    <div style="margin-top:16px">
+      <div class="flex-between" style="margin-bottom:10px">
+        <div class="text-sm text-muted">${dataRows.length} records to import</div>
+        <button class="btn btn-success btn-sm" onclick="confirmPOImport()">Import All</button>
+      </div>
+      <div class="import-preview">
+        <table class="import-table">
+          <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+          <tbody>${dataRows.slice(0,5).map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+        ${dataRows.length>5?`<div class="text-sm text-muted" style="padding:8px">...and ${dataRows.length-5} more rows</div>`:''}
+      </div>
+    </div>`;
+}
+
+function confirmPOImport(){
+  if(!importRows.length) return;
+  const headers = importRows[0].map(h=>h.trim().toLowerCase());
+  const dataRows = importRows.slice(1).filter(r=>r.some(c=>c.trim()));
+
+  // Group by PO Number
+  const poMap = {};
+  dataRows.forEach(row=>{
+    const get=(n)=>{ const i=headers.findIndex(h=>h.includes(n)); return i>=0?(row[i]||'').trim():''; };
+    const poNo = get('po number')||get('po no');
+    if(!poNo) return;
+    if(!poMap[poNo]) poMap[poNo]={poNo, poDate:get('po date'), receiptDate:get('receipt'), supplier:get('supplier'), items:[]};
+    if(importType==='semen'){
+      poMap[poNo].items.push({
+        bullName:get('bull name')||get('bull'),
+        semenNo:get('semen no'),
+        type:get('type')||'Conventional',
+        qty:Number(get('qty'))||0,
+        rate:Number(get('rate'))||0,
+        gstPct:Number(get('gst'))||0,
+      });
+    } else {
+      poMap[poNo].items.push({
+        itemName:get('item name')||get('item'),
+        expiry:get('expiry'),
+        qty:Number(get('qty'))||0,
+        rate:Number(get('rate'))||0,
+        gstPct:Number(get('gst'))||0,
+      });
+    }
+  });
+
+  const storeKey = importType==='semen'?'semenPOs':'fixedPOs';
+  Object.values(poMap).forEach(po=>{
+    const gst = calcLineGST(po.items);
+    DB.push(storeKey, {...po, id:uid(), type:importType, source:'excel', createdAt:new Date().toISOString(), ...gst});
+  });
+
+  const count = Object.keys(poMap).length;
+  closeModal('import-modal');
+  renderRecords();
+  renderStock();
+  showAlert('✅','Import Complete',`${count} POs imported successfully.`);
+}
+
+// ============================================================
+// CSV EXPORT
+// ============================================================
+function exportCSV(){
+  const semenPOs = DB.getArr('semenPOs');
+  const fixedPOs = DB.getArr('fixedPOs');
+  const supplies = DB.getArr('supplies');
+  const bulls = calcBullStock();
+  const fixed = calcFixedStock();
+
+  let rows = [];
+  rows.push(['=== SEMEN PURCHASE ORDERS ===']);
+  rows.push(['PO No','PO Date','Receipt Date','Supplier','Bull Name','Semen No','Type','Qty','Rate','GST%','Base Amt','GST Amt','Total']);
+  semenPOs.forEach(po=>{
+    po.items.forEach(item=>{
+      const base=item.qty*item.rate, gst=base*(item.gstPct/100);
+      rows.push([po.poNo,po.poDate,po.receiptDate||'',po.supplier,item.bullName,item.semenNo||'',item.type,item.qty,item.rate,item.gstPct,base.toFixed(2),gst.toFixed(2),(base+gst).toFixed(2)]);
+    });
+    rows.push(['','','','','','','','','','','Base:',po.baseTotal?.toFixed(2)||'','Total:',po.grandTotal?.toFixed(2)||'']);
+  });
+
+  rows.push([]);
+  rows.push(['=== FIXED ITEMS PURCHASE ORDERS ===']);
+  rows.push(['PO No','PO Date','Receipt Date','Supplier','Item Name','Expiry','Qty','Rate','GST%','Base Amt','GST Amt','Total']);
+  fixedPOs.forEach(po=>{
+    po.items.forEach(item=>{
+      const base=item.qty*item.rate, gst=base*(item.gstPct/100);
+      rows.push([po.poNo,po.poDate,po.receiptDate||'',po.supplier,item.itemName,item.expiry||'',item.qty,item.rate,item.gstPct,base.toFixed(2),gst.toFixed(2),(base+gst).toFixed(2)]);
+    });
+  });
+
+  rows.push([]);
+  rows.push(['=== SUPPLY RECORDS ===']);
+  rows.push(['Receipt No','Date','From Code','From Name','To Code','To Name','Open KM','Close KM','Total KM','Note','Item Type','Bull/Item','Type/—','Qty']);
+  supplies.forEach(sup=>{
+    (sup.items||[]).forEach(item=>{
+      rows.push([sup.receipt,sup.date,sup.fromCode,sup.fromName,sup.toCode,sup.toName,sup.openKM,sup.closeKM,sup.totalKM,sup.note||'',
+        item.itemType==='semen'?'Semen':'Fixed',
+        item.itemType==='semen'?item.bullName:item.itemName,
+        item.itemType==='semen'?item.type:'',
+        item.qty]);
+    });
+  });
+
+  rows.push([]);
+  rows.push(['=== STOCK SUMMARY — SEMEN ===']);
+  rows.push(['Bull Name','Conv Received','Conv Supplied','Conv Available','Sex Received','Sex Supplied','Sex Available']);
+  Object.entries(bulls).forEach(([name,b])=>{
+    rows.push([name,b.conv.received,b.conv.supplied,b.conv.received-b.conv.supplied,b.sex.received,b.sex.supplied,b.sex.received-b.sex.supplied]);
+  });
+
+  rows.push([]);
+  rows.push(['=== STOCK SUMMARY — FIXED ITEMS ===']);
+  rows.push(['Item Name','Available','Nearest Expiry','Status']);
+  Object.entries(fixed).forEach(([name,f])=>{
+    rows.push([name,f.available||0,f.nearestExpiry||'',getExpiryStatus(f.nearestExpiry)||'']);
+  });
+
+  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadFile(csv, `ssm_export_${today()}.csv`, 'text/csv');
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function parseCSVText(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+  return lines.map(line=>{
+    const cells=[];
+    let inQ=false, cur='';
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'){ inQ=!inQ; }
+      else if(line[i]===','&&!inQ){ cells.push(cur.trim()); cur=''; }
+      else cur+=line[i];
+    }
+    cells.push(cur.trim());
+    return cells;
+  });
+}
+
+function downloadFile(content, filename, mimeType){
+  const blob = new Blob([content], {type:mimeType});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('active');
+}
+
+function showAlert(icon, title, msg, onClose){
+  document.getElementById('alert-icon').textContent=icon;
+  document.getElementById('alert-title').textContent=title;
+  document.getElementById('alert-msg').textContent=msg;
+  document.getElementById('alert-btns').innerHTML=`<button class="btn btn-primary w-full" onclick="closeModal('alert-modal')${onClose?';('+onClose.toString()+')()':''}">OK</button>`;
+  document.getElementById('alert-modal').classList.add('active');
+}
+
+function showConfirm(icon, title, msg, onConfirm){
+  document.getElementById('alert-icon').textContent=icon;
+  document.getElementById('alert-title').textContent=title;
+  document.getElementById('alert-msg').textContent=msg;
+  document.getElementById('alert-btns').innerHTML=`
+    <button class="btn btn-ghost w-full" onclick="closeModal('alert-modal')">Cancel</button>
+    <button class="btn btn-danger w-full" onclick="closeModal('alert-modal');(${onConfirm.toString()})()">Confirm</button>
+  `;
+  document.getElementById('alert-modal').classList.add('active');
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.autocomplete-wrap')){
+    document.querySelectorAll('.autocomplete-list').forEach(l=>l.classList.add('hidden'));
+  }
+});
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click', e=>{
+    if(e.target===overlay) overlay.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>
