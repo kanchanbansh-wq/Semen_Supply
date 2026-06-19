@@ -1957,5 +1957,25 @@ document.querySelectorAll('.modal-overlay').forEach(overlay=>{
   });
 });
 </script>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+  
+    const firebaseConfig = {
+  apiKey: "AIzaSyA_mVT7DczAykA-0o85yw0QG4zNWMRPyTw",
+  authDomain: "seman-supply.firebaseapp.com",
+  projectId: "seman-supply",
+  storageBucket: "seman-supply.firebasestorage.app",
+  messagingSenderId: "609265498464",
+  appId: "1:609265498464:web:cb8cf4f992e352ec838605"
+};
+ 
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  console.log("Firebase Connected");
+</script>
 </body>
 </html>
