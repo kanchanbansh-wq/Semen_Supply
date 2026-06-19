@@ -279,7 +279,8 @@
       <input type="password" id="login-pwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div id="login-error" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>
-    <button class="btn btn-primary btn-full" onclick="doLogin()">Login →</button>
+    <div id="fb-status" style="color:var(--text3);font-size:11px;margin-bottom:10px;text-align:center;font-family:var(--mono)">🔄 Connecting to Firebase...</div>
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()" disabled>Login →</button>
   </div>
 </div>
 
@@ -530,24 +531,115 @@
 // ============================================================
 // DATA LAYER
 // ============================================================
+const FB_KEYS = ['passwords','fixedItems','centers','semenPOs','fixedPOs','supplies'];
+const FB_COLLECTION = 'ssm_data';
+let fbReady = false;          // true once every key has received its first Firestore snapshot
+const fbLoadedKeys = new Set();
+
 const DB = {
   get(k){ try{ return JSON.parse(localStorage.getItem('ssm_'+k)||'null'); }catch(e){ return null; } },
-  set(k,v){ localStorage.setItem('ssm_'+k, JSON.stringify(v)); },
+  set(k,v){
+    localStorage.setItem('ssm_'+k, JSON.stringify(v));
+    DB.pushToFirebase(k,v);
+  },
+  // Writes to localStorage only — used when data arrives FROM Firestore, so we
+  // don't immediately write it straight back up again.
+  setLocal(k,v){ localStorage.setItem('ssm_'+k, JSON.stringify(v)); },
   getArr(k){ return DB.get(k)||[]; },
   push(k,v){ const a=DB.getArr(k); a.push(v); DB.set(k,a); },
-  save(k,arr){ DB.set(k,arr); }
+  save(k,arr){ DB.set(k,arr); },
+  pushToFirebase(k,v){
+    if(!window.__fb) return; // Firebase script not loaded yet — value is still safe in localStorage
+    const {db, doc, setDoc} = window.__fb;
+    setDoc(doc(db, FB_COLLECTION, k), { value: v, updatedAt: Date.now() })
+      .catch(err=>{ console.error('Firebase save failed for', k, err); showFirebaseError(); });
+  }
 };
 
-// Init defaults
+// Init defaults (used as fallback before Firestore has responded, and to seed
+// brand-new Firestore data on first ever run)
 function initDefaults(){
-  if(!DB.get('passwords')) DB.set('passwords',{purchase:'purchase123',supply:'supply123',monitor:'monitor123'});
-  if(!DB.get('fixedItems')) DB.set('fixedItems',['NL2','Sheath','Gloves']);
-  if(!DB.get('centers')) DB.set('centers',[]);
-  if(!DB.get('semenPOs')) DB.set('semenPOs',[]);
-  if(!DB.get('fixedPOs')) DB.set('fixedPOs',[]);
-  if(!DB.get('supplies')) DB.set('supplies',[]);
+  if(!DB.get('passwords')) DB.setLocal('passwords',{purchase:'purchase123',supply:'supply123',monitor:'monitor123'});
+  if(!DB.get('fixedItems')) DB.setLocal('fixedItems',['NL2','Sheath','Gloves']);
+  if(!DB.get('centers')) DB.setLocal('centers',[]);
+  if(!DB.get('semenPOs')) DB.setLocal('semenPOs',[]);
+  if(!DB.get('fixedPOs')) DB.setLocal('fixedPOs',[]);
+  if(!DB.get('supplies')) DB.setLocal('supplies',[]);
 }
 initDefaults();
+
+// ============================================================
+// FIREBASE SYNC
+// Mirrors each DB key to/from a Firestore document of the same name in the
+// "ssm_data" collection, and keeps every connected device live-updated.
+// ============================================================
+function setFirebaseStatus(text, ready){
+  const el = document.getElementById('fb-status');
+  if(el) el.textContent = text;
+  const btn = document.getElementById('login-btn');
+  if(btn) btn.disabled = !ready;
+}
+
+function showFirebaseError(){
+  const el = document.getElementById('fb-status');
+  if(el){ el.textContent = '⚠️ Sync error — check internet connection'; el.style.color = 'var(--red)'; }
+}
+
+window.initFirebaseSync = function(){
+  const {db, doc, onSnapshot} = window.__fb;
+  setFirebaseStatus('🔄 Connecting to Firebase...', false);
+
+  // Safety net: if Firestore doesn't respond (offline, or security rules
+  // blocking access) within 8s, let the user in anyway using whatever is
+  // cached in localStorage so the app never gets permanently stuck.
+  const fallbackTimer = setTimeout(()=>{
+    if(!fbReady){
+      fbReady = true;
+      setFirebaseStatus('⚠️ Working offline (Firebase unreachable)', true);
+    }
+  }, 8000);
+
+  FB_KEYS.forEach(key=>{
+    const ref = doc(db, FB_COLLECTION, key);
+    onSnapshot(ref, snap=>{
+      if(snap.exists()){
+        DB.setLocal(key, snap.data().value);
+      } else {
+        // First run ever — nothing in Firestore yet for this key, push our local default up.
+        DB.pushToFirebase(key, DB.get(key));
+      }
+
+      if(!fbLoadedKeys.has(key)){
+        fbLoadedKeys.add(key);
+        if(fbLoadedKeys.size === FB_KEYS.length){
+          fbReady = true;
+          clearTimeout(fallbackTimer);
+          setFirebaseStatus('✅ Synced with Firebase', true);
+        }
+      }
+
+      // If the app is already open, live-refresh whatever's on screen so every
+      // role sees changes made by other roles/devices in real time.
+      if(currentRole) refreshCurrentPage();
+    }, err=>{
+      console.error('Firebase listen failed for', key, err);
+      showFirebaseError();
+    });
+  });
+};
+
+function refreshCurrentPage(){
+  const active = document.querySelector('.page.active');
+  if(!active) return;
+  const page = active.id.replace('page-','');
+  if(page==='stock') renderStock();
+  if(page==='records') renderRecords();
+  if(page==='settings') renderSettings();
+}
+
+// In case the module script at the bottom already ran before this point
+// (unlikely, but defensive), let it know we're ready to receive the call.
+window.dispatchEvent(new Event('ssm-ready'));
 
 let currentRole = null;
 let currentFilter = 'all';
@@ -1957,25 +2049,35 @@ document.querySelectorAll('.modal-overlay').forEach(overlay=>{
   });
 });
 </script>
-  <script type="module">
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+  import {
+    getFirestore, doc, setDoc, onSnapshot, collection, getDocs
+  } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-  
-    const firebaseConfig = {
-  apiKey: "AIzaSyA_mVT7DczAykA-0o85yw0QG4zNWMRPyTw",
-  authDomain: "seman-supply.firebaseapp.com",
-  projectId: "seman-supply",
-  storageBucket: "seman-supply.firebasestorage.app",
-  messagingSenderId: "609265498464",
-  appId: "1:609265498464:web:cb8cf4f992e352ec838605"
-};
- 
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_mVT7DczAykA-0o85yw0QG4zNWMRPyTw",
+    authDomain: "seman-supply.firebaseapp.com",
+    projectId: "seman-supply",
+    storageBucket: "seman-supply.firebasestorage.app",
+    messagingSenderId: "609265498464",
+    appId: "1:609265498464:web:cb8cf4f992e352ec838605"
+  };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // Expose Firestore handles to the classic (non-module) app script below.
+  window.__fb = { db, doc, setDoc, onSnapshot, collection, getDocs };
+
   console.log("Firebase Connected");
+
+  // Kick off sync once the main script has defined initFirebaseSync().
+  if (window.initFirebaseSync) {
+    window.initFirebaseSync();
+  } else {
+    window.addEventListener('ssm-ready', () => window.initFirebaseSync());
+  }
 </script>
 </body>
 </html>
