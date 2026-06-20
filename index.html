@@ -571,7 +571,7 @@ const DB = {
 // brand-new Firestore data on first ever run)
 function initDefaults(){
   if(!DB.get('passwords')) DB.setLocal('passwords',{purchase:'purchase123',supply:'supply123',monitor:'monitor123'});
-  if(!DB.get('fixedItems')) DB.setLocal('fixedItems',['NL2','Sheath','Gloves']);
+  if(!DB.get('fixedItems')) DB.setLocal('fixedItems',['LN2','Sheath','Gloves']);
   if(!DB.get('centers')) DB.setLocal('centers',[]);
   if(!DB.get('semenPOs')) DB.setLocal('semenPOs',[]);
   if(!DB.get('fixedPOs')) DB.setLocal('fixedPOs',[]);
