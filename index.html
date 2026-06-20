@@ -314,6 +314,7 @@
     <div id="page-purchase" class="page">
       <div class="section-title">Purchase Order</div>
       <div class="section-sub">Record new PO receipt</div>
+      <div class="section-sub">Record new PO receipt</div>
       <div class="tab-row">
         <button class="tab-btn active" id="po-tab-semen" onclick="switchPOTab('semen')">Semen PO</button>
         <button class="tab-btn" id="po-tab-fixed" onclick="switchPOTab('fixed')">Fixed Items PO</button>
@@ -948,7 +949,7 @@ function renderSemenLineItems(){
             <div class="autocomplete-list hidden" id="sli-bull-list-${item.id}"></div>
           </div>
         </div>
-        <div class="field mb-0"><label>Invoice No.</label><input type="text" id="sli-sno-${item.id}" placeholder="SN-001"></div>
+        <div class="field mb-0"><label>Description</label><input type="text" id="sli-sno-${item.id}" placeholder="SN-001"></div>
         <div class="field mb-0">
           <label>Type</label>
           <select id="sli-type-${item.id}">
