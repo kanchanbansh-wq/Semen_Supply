@@ -324,12 +324,15 @@
         <div class="card">
           <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Semen Purchase Order</div>
           <div class="field-row">
-            <div class="field"><label>PO Number *</label><input type="text" id="spo-no" placeholder="PO-2024-001"></div>
+            <div class="field"><label>PO Number *</label><input type="text" id="spo-no" placeholder="PO Entery"></div>
             <div class="field"><label>PO Date *</label><input type="date" id="spo-date"></div>
           </div>
           <div class="field-row">
             <div class="field"><label>Receipt Date</label><input type="date" id="spo-rdate"></div>
             <div class="field"><label>Supplier *</label><input type="text" id="spo-supplier" placeholder="Supplier name"></div>
+<div class="field"><label>Invoice Number *</label><input type="text" id="spo-no" placeholder="Invoice Entery"></div>
+            <div class="field"><label>Invoice Date *</label><input type="date" id="spo-date"></div>
+
           </div>
         </div>
         <div class="card">
@@ -1596,7 +1599,7 @@ function editRecord(id, type){
         <div class="text-sm text-muted" style="margin-bottom:8px">Item ${i+1}</div>
         <div class="field-row">
           <div class="field mb-0"><label>Bull Name</label><input type="text" id="ep-bull-${i}" value="${item.bullName}"></div>
-          <div class="field mb-0"><label>Invoice No.</label><input type="text" id="ep-sno-${i}" value="${item.semenNo||''}"></div>
+          <div class="field mb-0"><label>Description.</label><input type="text" id="ep-sno-${i}" value="${item.semenNo||''}"></div>
         </div>
         <div class="field-row mt-8">
           <div class="field mb-0"><label>Qty</label><input type="number" id="ep-qty-${i}" value="${item.qty}"></div>
