@@ -148,7 +148,7 @@
   .bull-stat .val { color: var(--text); font-weight: 700; }
 
   /* Line items table */
-  .line-items { border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; margin-bottom: 8px; }
+  .line-items { border: 1px solid var(--border); border-radius: var(--radius2);  margin-bottom: 8px; }
   .line-item { border-bottom: 1px solid var(--border); padding: 10px 12px; }
   .line-item:last-child { border-bottom: none; }
   .line-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--text2); }
@@ -324,16 +324,15 @@
         <div class="card">
           <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Semen Purchase Order</div>
           <div class="field-row">
-            <div class="field"><label>PO Number *</label><input type="text" id="spo-no" placeholder="PO-2024-001"></div>
+            <div class="field"><label>PO Number *</label><input type="text" id="spo-no" placeholder="PO Entery"></div>
             <div class="field"><label>PO Date *</label><input type="date" id="spo-date"></div>
           </div>
           <div class="field-row">
             <div class="field"><label>Receipt Date</label><input type="date" id="spo-rdate"></div>
             <div class="field"><label>Supplier *</label><input type="text" id="spo-supplier" placeholder="Supplier name"></div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Invoice Number</label><input type="text" id="spo-invno" placeholder="INV-001"></div>
-            <div class="field"><label>Invoice Date</label><input type="date" id="spo-invdate"></div>
+<div class="field"><label>Invoice Number *</label><input type="text" id="spo-no" placeholder="Invoice Entery"></div>
+            <div class="field"><label>Invoice Date *</label><input type="date" id="spo-date"></div>
+
           </div>
         </div>
         <div class="card">
@@ -357,12 +356,9 @@
             <div class="field"><label>PO Date *</label><input type="date" id="fpo-date"></div>
           </div>
           <div class="field-row">
-            <div class="field"><label>Receipt Date</label><input type="date" id="fpo-rdate"></div>
+            <div class="field"><label>PO Valid Date *</label><input type="date" id="fpo-rdate"></div>
             <div class="field"><label>Supplier *</label><input type="text" id="fpo-supplier" placeholder="Supplier name"></div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Invoice Number</label><input type="text" id="fpo-invno" placeholder="INV-001"></div>
-            <div class="field"><label>Invoice Date</label><input type="date" id="fpo-invdate"></div>
+
           </div>
         </div>
         <div class="card">
@@ -501,8 +497,16 @@
     <div class="field"><label>Center Code *</label><input type="text" id="nc-code" placeholder="CC001"></div>
     <div class="field"><label>Center Name *</label><input type="text" id="nc-name" placeholder="Main Center"></div>
     <div class="field"><label>DOJ</label><input type="date" id="nc-doj"></div>
+<div class="field"><label>MAITs Name *</label><input type="text" id="nc-name" placeholder="Name"></div>
+
+<div class="field"><label>MAITs Name *</label><select id="sli-type-${item.id}">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select> </div>
+
     <button class="btn btn-success btn-full" onclick="saveCenter()">Save Center</button>
   </div>
+
 </div>
 
 <div class="modal-overlay" id="import-modal">
@@ -756,7 +760,7 @@ function calcBullStock(){
       if(!item.bullName) return;
       const k = item.bullName;
       if(!bulls[k]) bulls[k]={conv:{received:0,supplied:0},sex:{received:0,supplied:0}};
-      const type = item.type==='Sex Sorted'?'sex':'conv';
+      const type = item.type==='Sex sorted'?'sex':'conv';
       bulls[k][type].received += Number(item.qty)||0;
     });
   });
@@ -765,7 +769,7 @@ function calcBullStock(){
       if(!item.bullName) return;
       const k = item.bullName;
       if(!bulls[k]) bulls[k]={conv:{received:0,supplied:0},sex:{received:0,supplied:0}};
-      const type = item.type==='Sex Sorted'?'sex':'conv';
+      const type = item.type==='Sex sorted'?'sex':'conv';
       bulls[k][type].supplied += Number(item.qty)||0;
     });
   });
@@ -808,7 +812,7 @@ function getBullStockAvailable(bullName, type='conv'){
   const bulls = calcBullStock();
   const b = bulls[bullName];
   if(!b) return 0;
-  const t = type==='Sex Sorted'?'sex':'conv';
+  const t = type==='Sex sorted'?'sex':'conv';
   return (b[t].received - b[t].supplied);
 }
 
@@ -848,7 +852,7 @@ function renderStock(){
 
   document.getElementById('summary-strip').innerHTML = `
     <div class="summary-item"><div class="val">${convTotal}</div><div class="lbl">Conv. Doses</div></div>
-    <div class="summary-item"><div class="val">${sexTotal}</div><div class="lbl">Sex Sorted</div></div>
+    <div class="summary-item"><div class="val">${sexTotal}</div><div class="lbl">Sex sorted</div></div>
     <div class="summary-item"><div class="val">${bullCount}</div><div class="lbl">Active Bulls</div></div>
     <div class="summary-item"><div class="val">${fiTotal}</div><div class="lbl">Fixed Items</div></div>
     <div class="summary-item"><div class="val">${totalKM}</div><div class="lbl">Total KM</div></div>
@@ -875,7 +879,7 @@ function renderStock(){
           <div class="bull-stat" style="background:rgba(6,182,212,0.1);color:var(--cyan)">Avail: <span class="val" style="color:var(--cyan)">${ca}</span></div>
         </div>
         <div class="progress-bar"><div class="progress-fill conv" style="width:${convPct}%"></div></div>`:''}
-        ${b.sex.received>0?`<div class="text-sm text-muted" style="margin-bottom:4px;margin-top:8px">Sex Sorted</div>
+        ${b.sex.received>0?`<div class="text-sm text-muted" style="margin-bottom:4px;margin-top:8px">Sex sorted</div>
         <div class="bull-stats">
           <div class="bull-stat">Rcvd: <span class="val">${b.sex.received}</span></div>
           <div class="bull-stat">Suppl: <span class="val">${b.sex.supplied}</span></div>
@@ -952,12 +956,12 @@ function renderSemenLineItems(){
             <div class="autocomplete-list hidden" id="sli-bull-list-${item.id}"></div>
           </div>
         </div>
-        <div class="field mb-0"><label>Semen No.</label><input type="text" id="sli-sno-${item.id}" placeholder="SN-001"></div>
+        <div class="field mb-0"><label>Description</label><input type="text" id="sli-sno-${item.id}" placeholder="SN-001"></div>
         <div class="field mb-0">
           <label>Type</label>
           <select id="sli-type-${item.id}">
             <option value="Conventional">Conventional</option>
-            <option value="Sex Sorted">Sex Sorted</option>
+            <option value="Sex sorted">Sex sorted</option>
           </select>
         </div>
         <div class="field mb-0"><label>Qty (doses)</label><input type="number" id="sli-qty-${item.id}" placeholder="100" oninput="updateSemenGST()"></div>
@@ -1055,7 +1059,9 @@ function renderFixedLineItems(){
             ${fiItems.map(f=>`<option value="${f}">${f}</option>`).join('')}
           </select>
         </div>
-        <div class="field mb-0"><label>Expiry Date</label><input type="date" id="fli-exp-${item.id}"></div>
+<div class="field mb-0"><label>Invoice NO. </label><input type="text" id="fli-qty-${item.id}" placeholder="50" oninput="updateFixedGST()"></div>
+
+      <div class="field mb-0"><label>Invoice Date</label><input type="date" id="fli-exp-${item.id}"></div>
         <div class="field mb-0"><label>Qty</label><input type="number" id="fli-qty-${item.id}" placeholder="50" oninput="updateFixedGST()"></div>
         <div class="field mb-0"><label>Rate ₹</label><input type="number" id="fli-rate-${item.id}" placeholder="20" oninput="updateFixedGST()"></div>
         <div class="field mb-0"><label>GST %</label><input type="number" id="fli-gst-${item.id}" placeholder="18" value="18" oninput="updateFixedGST()"></div>
@@ -1101,15 +1107,12 @@ function saveSemenPO(){
   const po = {
     id: uid(), type:'semen', poNo, poDate,
     receiptDate: document.getElementById('spo-rdate').value,
-    invoiceNo: document.getElementById('spo-invno').value.trim(),
-    invoiceDate: document.getElementById('spo-invdate').value,
     supplier, items, ...gst,
     createdAt: new Date().toISOString(), source:'manual'
   };
   DB.push('semenPOs', po);
   showAlert('✅','Saved!',`Semen PO ${poNo} saved successfully.`);
   resetSemenForm();
-  exportCSV();
 }
 
 function resetSemenForm(){
@@ -1117,8 +1120,6 @@ function resetSemenForm(){
   document.getElementById('spo-supplier').value='';
   document.getElementById('spo-date').value=today();
   document.getElementById('spo-rdate').value=today();
-  document.getElementById('spo-invno').value='';
-  document.getElementById('spo-invdate').value='';
   semenLineItems=[];
   addSemenLineItem();
 }
@@ -1134,15 +1135,12 @@ function saveFixedPO(){
   const po = {
     id: uid(), type:'fixed', poNo, poDate,
     receiptDate: document.getElementById('fpo-rdate').value,
-    invoiceNo: document.getElementById('fpo-invno').value.trim(),
-    invoiceDate: document.getElementById('fpo-invdate').value,
     supplier, items, ...gst,
     createdAt: new Date().toISOString(), source:'manual'
   };
   DB.push('fixedPOs', po);
   showAlert('✅','Saved!',`Fixed Items PO ${poNo} saved successfully.`);
   resetFixedForm();
-  exportCSV();
 }
 
 function resetFixedForm(){
@@ -1150,8 +1148,6 @@ function resetFixedForm(){
   document.getElementById('fpo-supplier').value='';
   document.getElementById('fpo-date').value=today();
   document.getElementById('fpo-rdate').value=today();
-  document.getElementById('fpo-invno').value='';
-  document.getElementById('fpo-invdate').value='';
   fixedLineItems=[];
   addFixedLineItem();
 }
@@ -1240,7 +1236,7 @@ function renderSupplyItems(){
           <label>Semen Type</label>
           <select id="sui-stype-${item.id}" onchange="checkSupplyStock()">
             <option value="Conventional">Conventional</option>
-            <option value="Sex Sorted">Sex Sorted</option>
+            <option value="Sex sorted">Sex sorted</option>
           </select>
         </div>
         <div class="field mb-0 mt-8">
@@ -1505,7 +1501,6 @@ function renderRecordCard(r){
           <div class="record-id">${r.poNo}</div>
           <div class="record-meta">📅 ${r.poDate} • Supplier: ${r.supplier}</div>
           ${r.receiptDate?`<div class="record-meta">Receipt: ${r.receiptDate}</div>`:''}
-          ${r.invoiceNo?`<div class="record-meta">Invoice: ${r.invoiceNo}${r.invoiceDate?' • '+r.invoiceDate:''}</div>`:''}
         </div>
         ${isMonitor?`<div class="record-actions">
           <button class="btn btn-ghost btn-xs" onclick="editRecord('${r.id}','semen')">✏️</button>
@@ -1532,8 +1527,6 @@ function renderRecordCard(r){
           <div class="record-type" style="color:var(--green)">Fixed Items PO ${srcBadge} ${editedBadge}</div>
           <div class="record-id">${r.poNo}</div>
           <div class="record-meta">📅 ${r.poDate} • Supplier: ${r.supplier}</div>
-          ${r.receiptDate?`<div class="record-meta">Receipt: ${r.receiptDate}</div>`:''}
-          ${r.invoiceNo?`<div class="record-meta">Invoice: ${r.invoiceNo}${r.invoiceDate?' • '+r.invoiceDate:''}</div>`:''}
         </div>
         ${isMonitor?`<div class="record-actions">
           <button class="btn btn-ghost btn-xs" onclick="editRecord('${r.id}','fixed')">✏️</button>
@@ -1611,16 +1604,12 @@ function editRecord(id, type){
         <div class="field"><label>Receipt Date</label><input type="date" id="ep-rdate" value="${rec.receiptDate||''}"></div>
       </div>
       <div class="field"><label>Supplier</label><input type="text" id="ep-supplier" value="${rec.supplier}"></div>
-      <div class="field-row">
-        <div class="field"><label>Invoice Number</label><input type="text" id="ep-invno" value="${rec.invoiceNo||''}"></div>
-        <div class="field"><label>Invoice Date</label><input type="date" id="ep-invdate" value="${rec.invoiceDate||''}"></div>
-      </div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Items (${rec.items.length}):</div>
       ${rec.items.map((item,i)=>`<div class="card" style="margin-bottom:8px">
         <div class="text-sm text-muted" style="margin-bottom:8px">Item ${i+1}</div>
         <div class="field-row">
           <div class="field mb-0"><label>Bull Name</label><input type="text" id="ep-bull-${i}" value="${item.bullName}"></div>
-          <div class="field mb-0"><label>Semen No.</label><input type="text" id="ep-sno-${i}" value="${item.semenNo||''}"></div>
+          <div class="field mb-0"><label>Description.</label><input type="text" id="ep-sno-${i}" value="${item.semenNo||''}"></div>
         </div>
         <div class="field-row mt-8">
           <div class="field mb-0"><label>Qty</label><input type="number" id="ep-qty-${i}" value="${item.qty}"></div>
@@ -1638,10 +1627,6 @@ function editRecord(id, type){
         <div class="field"><label>Receipt Date</label><input type="date" id="ep-rdate" value="${rec.receiptDate||''}"></div>
       </div>
       <div class="field"><label>Supplier</label><input type="text" id="ep-supplier" value="${rec.supplier}"></div>
-      <div class="field-row">
-        <div class="field"><label>Invoice Number</label><input type="text" id="ep-invno" value="${rec.invoiceNo||''}"></div>
-        <div class="field"><label>Invoice Date</label><input type="date" id="ep-invdate" value="${rec.invoiceDate||''}"></div>
-      </div>
       ${rec.items.map((item,i)=>`<div class="card" style="margin-bottom:8px">
         <div class="text-sm text-muted" style="margin-bottom:8px">Item ${i+1}: ${item.itemName}</div>
         <div class="field-row">
@@ -1667,8 +1652,6 @@ function saveEditedRecord(id, type, itemCount){
   arr[idx].poDate = document.getElementById('ep-date').value;
   arr[idx].receiptDate = document.getElementById('ep-rdate').value;
   arr[idx].supplier = document.getElementById('ep-supplier').value;
-  arr[idx].invoiceNo = document.getElementById('ep-invno')?.value||'';
-  arr[idx].invoiceDate = document.getElementById('ep-invdate')?.value||'';
   arr[idx].editedAt = new Date().toISOString();
 
   for(let i=0;i<itemCount;i++){
@@ -1692,7 +1675,6 @@ function saveEditedRecord(id, type, itemCount){
   renderRecords();
   renderStock();
   showAlert('✅','Updated','Record updated successfully.');
-  exportCSV();
 }
 
 // ============================================================
@@ -1864,15 +1846,15 @@ function switchImportTab(tab){
   const p=document.querySelector('#import-content p');
   if(p) p.textContent=tab==='semen'
     ?'Columns: PO Number, PO Date, Receipt Date, Supplier, Bull Name, Semen No, Type, Qty, Rate, GST%'
-    :'Columns: PO Number, PO Date, Receipt Date, Supplier, Item Name, Expiry Date, Qty, Rate, GST%';
+    :'Columns: PO Number, PO Date, Receipt Date, Supplier, Item Name, PO No., Invoice Date, Qty, Rate, GST%';
 }
 
 function downloadPOTemplate(type){
   let csv;
   if(type==='semen'){
-    csv='PO Number,PO Date,Receipt Date,Invoice No,Invoice Date,Supplier,Bull Name,Semen No,Type,Qty,Rate,GST%\nSPO-001,2024-01-01,2024-01-05,INV-001,2024-01-04,ABC Genetics,Bull A,SN001,Conventional,100,50,5';
+    csv='PO Number,PO Date,Receipt Date,Supplier,Bull Name,Semen No,Type,Qty,Rate,GST%\nSPO-001,2024-01-01,2024-01-05,ABC Genetics,Bull A,SN001,Conventional,100,50,5';
   } else {
-    csv='PO Number,PO Date,Receipt Date,Invoice No,Invoice Date,Supplier,Item Name,Expiry Date,Qty,Rate,GST%\nFPO-001,2024-01-01,2024-01-05,INV-002,2024-01-04,XYZ Supplies,Sheath,2025-12-31,500,2,18';
+    csv='PO Number,PO Date,Receipt Date,Supplier,Item Name, PO No., Invoice Date,Qty,Rate,GST%\nFPO-001,2024-01-01,2024-01-05,XYZ Supplies,Sheath,2025-12-31,500,2,18';
   }
   downloadFile(csv, `${type}_po_template.csv`, 'text/csv');
 }
@@ -1922,7 +1904,7 @@ function confirmPOImport(){
     const get=(n)=>{ const i=headers.findIndex(h=>h.includes(n)); return i>=0?(row[i]||'').trim():''; };
     const poNo = get('po number')||get('po no');
     if(!poNo) return;
-    if(!poMap[poNo]) poMap[poNo]={poNo, poDate:get('po date'), receiptDate:get('receipt'), invoiceNo:get('invoice no')||get('invoice number'), invoiceDate:get('invoice date'), supplier:get('supplier'), items:[]};
+    if(!poMap[poNo]) poMap[poNo]={poNo, poDate:get('po date'), receiptDate:get('receipt'), supplier:get('supplier'), items:[]};
     if(importType==='semen'){
       poMap[poNo].items.push({
         bullName:get('bull name')||get('bull'),
@@ -1954,7 +1936,6 @@ function confirmPOImport(){
   renderRecords();
   renderStock();
   showAlert('✅','Import Complete',`${count} POs imported successfully.`);
-  exportCSV();
 }
 
 // ============================================================
@@ -1969,22 +1950,22 @@ function exportCSV(){
 
   let rows = [];
   rows.push(['=== SEMEN PURCHASE ORDERS ===']);
-  rows.push(['PO No','PO Date','Receipt Date','Invoice No','Invoice Date','Supplier','Bull Name','Semen No','Type','Qty','Rate','GST%','Base Amt','GST Amt','Total']);
+  rows.push(['PO No','PO Date','Receipt Date','Supplier','Bull Name','Semen No','Type','Qty','Rate','GST%','Base Amt','GST Amt','Total']);
   semenPOs.forEach(po=>{
     po.items.forEach(item=>{
       const base=item.qty*item.rate, gst=base*(item.gstPct/100);
-      rows.push([po.poNo,po.poDate,po.receiptDate||'',po.invoiceNo||'',po.invoiceDate||'',po.supplier,item.bullName,item.semenNo||'',item.type,item.qty,item.rate,item.gstPct,base.toFixed(2),gst.toFixed(2),(base+gst).toFixed(2)]);
+      rows.push([po.poNo,po.poDate,po.receiptDate||'',po.supplier,item.bullName,item.semenNo||'',item.type,item.qty,item.rate,item.gstPct,base.toFixed(2),gst.toFixed(2),(base+gst).toFixed(2)]);
     });
     rows.push(['','','','','','','','','','','Base:',po.baseTotal?.toFixed(2)||'','Total:',po.grandTotal?.toFixed(2)||'']);
   });
 
   rows.push([]);
   rows.push(['=== FIXED ITEMS PURCHASE ORDERS ===']);
-  rows.push(['PO No','PO Date','Receipt Date','Invoice No','Invoice Date','Supplier','Item Name','Expiry','Qty','Rate','GST%','Base Amt','GST Amt','Total']);
+  rows.push(['PO No','PO Date','Receipt Date','Supplier','Item Name','Expiry','Qty','Rate','GST%','Base Amt','GST Amt','Total']);
   fixedPOs.forEach(po=>{
     po.items.forEach(item=>{
       const base=item.qty*item.rate, gst=base*(item.gstPct/100);
-      rows.push([po.poNo,po.poDate,po.receiptDate||'',po.invoiceNo||'',po.invoiceDate||'',po.supplier,item.itemName,item.expiry||'',item.qty,item.rate,item.gstPct,base.toFixed(2),gst.toFixed(2),(base+gst).toFixed(2)]);
+      rows.push([po.poNo,po.poDate,po.receiptDate||'',po.supplier,item.itemName,item.expiry||'',item.qty,item.rate,item.gstPct,base.toFixed(2),gst.toFixed(2),(base+gst).toFixed(2)]);
     });
   });
 
