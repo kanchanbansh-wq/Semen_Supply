@@ -10,15 +10,15 @@
  
    :root {
      --bg: skyblue;
-     --bg2: pink;
+     --bg2: forestgreen;
      --bg3: lightsilver;
-     --bg4: pink;
-     --border: black;
-     --border2: black;
+     --bg4: black;
+     --border: white;
+     --border2: white;
      --text: black;
-     --text2: black;
+     --text2: blue;
      --text3: black;
-     --accent: black;
+     --accent: blue;
      --accent2: black;
      --green: #22c87a;
      --green2: #16a060;
@@ -35,7 +35,14 @@
      --shadow: 0 4px 24px rgba(0,0,0,0.5);
    }
  
-   * { box-sizing: border-box; margin: 0; padding: 0; }
+   body.dark-mode {
+    --bg: #0b1220; --bg2: #121c2d; --bg3: #1b2940; --bg4: #172338;
+    --border: #2b3b52; --border2: #3a4b63; --text: #edf4ff; --text2: #c2cee0;
+    --text3: #91a3bd; --accent: #63a9ff; --accent2: #3788e8;
+    --red: #ff7777; --red2: #d94b4b; --shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+  body, #header, #nav, .card, input, select, textarea, button { transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; }
    body { display: flex; flex-direction: column; }
  
@@ -308,12 +315,34 @@
      <div id="header-title">🐂 <span>SSM</span></div>
      <div id="header-right">
        <div id="role-badge" class="role-badge"></div>
+       <button id="theme-toggle" class="btn btn-ghost btn-sm" onclick="toggleTheme()" aria-label="Toggle night mode" title="Toggle night mode">🌙 Night</button>
        <button class="btn btn-ghost btn-sm" onclick="logout()">Out</button>
      </div>
    </div>
  
    <div id="content">
-     <!-- Dashboard/Stock Page -->
+     <!-- Dashboard Page -->
+     <div id="page-dashboard" class="page">
+       <div class="flex-between" style="margin-bottom:4px">
+         <div>
+           <div class="section-title">Dashboard</div>
+           <div class="section-sub" style="margin-bottom:0">Live overview of stock, purchases, supplies and expiry alerts</div>
+         </div>
+         <button class="voice-btn speak-btn" onclick="speakDashboard()" title="Speak dashboard">🔊</button>
+       </div>
+       <div class="voice-help">Tap 🔊 to hear the dashboard summary.</div>
+       <div id="dashboard-grid" class="dash-grid" style="margin-top:14px"></div>
+       <div class="card">
+         <div class="card-title"><span class="dot"></span>Recent Activity</div>
+         <div id="dashboard-recent" class="dash-list"></div>
+       </div>
+       <div class="card">
+         <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Expiry Alerts</div>
+         <div id="dashboard-alerts" class="dash-list"></div>
+       </div>
+     </div>
+
+     <!-- Stock Page -->
      <div id="page-stock" class="page">
        <div class="section-title">Stock Overview</div>
        <div class="section-sub">Live inventory status</div>
@@ -396,6 +425,10 @@
      <div id="page-supply" class="page">
        <div class="section-title">Supply Record</div>
        <div class="section-sub">Record outgoing supply trip</div>
+       <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+         <div><div style="font-weight:700">Fixed Items</div><div class="text-muted text-sm">Add received fixed items to stock.</div></div>
+        <button class="btn btn-primary" onclick="openFixedPOFromSupply()">＋ Create Fixed Items PO</button>
+       </div>
        <div class="card">
          <div class="card-title"><span class="dot" style="background:var(--green)"></span>Trip Details</div>
          <div class="field-row">
@@ -418,12 +451,6 @@
              <div class="autocomplete-list hidden" id="sup-to-list"></div>
            </div>
          </div>
-         <div class="field-row">
-           <div class="field"><label>Opening KM</label><input type="number" id="sup-km-open" placeholder="12345" oninput="calcKM()"></div>
-           <div class="field"><label>Closing KM</label><input type="number" id="sup-km-close" placeholder="12400" oninput="calcKM()"></div>
-         </div>
-         <div id="km-total-disp" class="km-total hidden"></div>
-         <div class="field"><label>Note</label><input type="text" id="sup-note" placeholder="Optional note..."></div>
        </div>
        <div class="card">
          <div class="card-title"><span class="dot" style="background:var(--green)"></span>Supply Items</div>
@@ -618,16 +645,7 @@
  }
  
  window.initFirebaseSync = function(){
-   const {db, doc, onSnapshot, deleteDoc} = window.__fb;
-    async function deleteRecord(key) {
-     try {
-         await deleteDoc(doc(db, FB_COLLECTION, key));
-         alert("Record deleted successfully!");
-     } catch (error) {
-         console.error("Delete error:", error);
-         alert("Record delete nahi hua.");
-     }
-  }
+   const {db, doc, onSnapshot} = window.__fb;
    setFirebaseStatus('🔄 Connecting to Firebase...', false);
  
  
@@ -733,7 +751,27 @@
  // ============================================================
  // APP INIT
  // ============================================================
- function initApp(){
+ function applyTheme(theme){
+  document.body.classList.toggle('dark-mode', theme==='dark');
+  const btn=document.getElementById('theme-toggle');
+  if(btn){ btn.textContent = theme==='dark' ? '☀️ Day' : '🌙 Night'; btn.title = theme==='dark' ? 'Switch to day mode' : 'Switch to night mode'; }
+}
+function toggleTheme(){
+  const next=document.body.classList.contains('dark-mode')?'light':'dark';
+  try{ localStorage.setItem('ssm_theme',next); }catch(e){}
+  applyTheme(next);
+}
+function openFixedPOFromSupply(){
+  navigateTo('purchase');
+  switchPOTab('fixed');
+  const el=document.getElementById('po-fixed-form');
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function initApp(){
+  let savedTheme='light';
+  try{ savedTheme=localStorage.getItem('ssm_theme')||'light'; }catch(e){}
+  applyTheme(savedTheme);
    const badge = document.getElementById('role-badge');
    badge.textContent = currentRole.toUpperCase();
    badge.className = 'role-badge '+currentRole;
@@ -750,6 +788,7 @@
  function buildNav(){
    const nav = document.getElementById('nav');
    const items = [
+     {id:'dashboard', label:'Dashboard', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`},
      {id:'stock', label:'Stock', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`},
      {id:'records', label:'Records', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`},
    ];
@@ -772,6 +811,7 @@
    if(pageEl) pageEl.classList.add('active');
    const navEl = document.getElementById('nav-'+page);
    if(navEl) navEl.classList.add('active');
+   if(page==='dashboard') renderDashboard();
    if(page==='stock') renderStock();
    if(page==='records') renderRecords();
    if(page==='settings') renderSettings();
@@ -1241,6 +1281,8 @@
      createdAt: new Date().toISOString(), source:'manual'
    };
    DB.push('semenPOs', po);
+   renderStock();
+   renderDashboard();
    showAlert('✅','Saved!',`Semen PO ${poNo} saved successfully.`);
    resetSemenForm();
  }
@@ -1269,6 +1311,8 @@
      createdAt: new Date().toISOString(), source:'manual'
    };
    DB.push('fixedPOs', po);
+   renderStock();
+   renderDashboard();
    showAlert('✅','Saved!',`Fixed Items PO ${poNo} saved successfully.`);
    resetFixedForm();
  }
@@ -2090,6 +2134,7 @@
    closeModal('import-modal');
    renderRecords();
    renderStock();
+   renderDashboard();
    showAlert('✅','Import Complete',`${count} POs imported successfully.`);
  }
  
@@ -2239,7 +2284,7 @@ async function confirmPendingAction(){
  <script type="module">
    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
    import {
-     getFirestore, doc, setDoc, onSnapshot, collection, getDocs
+     getFirestore, doc, setDoc, onSnapshot, collection, getDocs, deleteDoc
    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
  
    const firebaseConfig = {
@@ -2253,9 +2298,16 @@ async function confirmPendingAction(){
  
    const app = initializeApp(firebaseConfig);
    const db = getFirestore(app);
+
+   window.addEventListener('error', (event) => {
+     if (String(event.message || '').toLowerCase().includes('firebase')) {
+       const el = document.getElementById('fb-status');
+       if (el) el.textContent = '⚠️ Firebase error — check Firestore rules/project';
+     }
+   });
  
    // Expose Firestore handles to the classic (non-module) app script below.
-   window.__fb = { db, doc, setDoc, onSnapshot, collection, getDocs };
+   window.__fb = { db, doc, setDoc, onSnapshot, collection, getDocs, deleteDoc };
  
    console.log("Firebase Connected");
  
